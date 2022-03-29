@@ -6,7 +6,6 @@ WORKDIR /src
 COPY ["TreinpositiesBot.csproj", "TreinpositiesBot.csproj"]
 RUN dotnet restore "TreinpositiesBot.csproj"
 COPY . .
-RUN mv appsettings.json.example appsettings.json
 RUN dotnet build "TreinpositiesBot.csproj" -c Release -o /app/build
 
 FROM build AS publish
