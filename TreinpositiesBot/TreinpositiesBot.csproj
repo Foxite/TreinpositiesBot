@@ -9,7 +9,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
       <PackageReference Include="DSharpPlus" Version="4.1.0" />
+      <PackageReference Include="Foxite.Common" Version="1.7.0" />
       <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
     </ItemGroup>
 

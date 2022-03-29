@@ -1,30 +1,149 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
+using Foxite.Common.Notifications;
+using HtmlAgilityPack;
+using Microsoft.Extensions.Options;
 
 var discord = new DiscordClient(new DiscordConfiguration() {
 	Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
 	Intents = DiscordIntents.GuildMessages
 });
 
-var regex = new Regex(@"\d{3,6}");
-
-var http = new HttpClient() {
-	DefaultRequestHeaders = {
-		UserAgent = { new ProductInfoHeaderValue("TreinpositiesBot", "0.1") }
-	}
+discord.ClientErrored += (_, args) => {
+	Console.WriteLine(args.Exception.ToStringDemystified());
+	return Task.CompletedTask;
 };
 
-async Task LookupTrainPicsAndSend(string[] numbers) {
-	
+var handler = new HttpClientHandler();
+handler.AllowAutoRedirect = false;
+var http = new HttpClient(handler) {
+	DefaultRequestHeaders = {
+		UserAgent = {
+			new ProductInfoHeaderValue("TreinpositiesBot", "0.1"),
+			new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)")
+		}
+	},
+	BaseAddress = new Uri("https://treinposities.nl")
+};
+
+string[] blockedPhotographers = (Environment.GetEnvironmentVariable("BLOCKED_PHOTOGRAPHERS") ?? "").Split(";");
+
+var random = new Random();
+
+DiscordWebhookLibNotificationSender? notifications = null;
+string? webhookUrl = Environment.GetEnvironmentVariable("WEBHOOK_URL");
+if (webhookUrl != null) {
+	notifications = new DiscordWebhookLibNotificationSender(new OptionsWrapper<DiscordWebhookLibNotificationSender.Config>(new DiscordWebhookLibNotificationSender.Config() {
+		WebhookUrl = webhookUrl
+	}));
 }
 
-discord.MessageCreated += (unused, args) => {
-	MatchCollection matches = regex.Matches(args.Message.Content);
-	if (matches.Count > 0) {
-		_ = LookupTrainPicsAndSend(matches.Cast<Match>().Select(match => match.Value).ToArray());
+async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
+	try {
+		foreach (string number in numbers) {
+			Uri vehicleUrl;
+			//https://treinposities.nl/?q=9556&q2=
+			string targetUri = $"/?q={Uri.EscapeDataString(number)}&q2=";
+
+			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
+				string content = await response.Content.ReadAsStringAsync();
+				if (response.StatusCode == HttpStatusCode.Found) {
+					vehicleUrl = response.Headers.Location!;
+				} else {
+					continue;
+				}
+			}
+
+			string? pictureUrl = null;
+			using (HttpResponseMessage response = await http.GetAsync(vehicleUrl + "/foto")) {
+				response.EnsureSuccessStatusCode();
+				var html = new HtmlDocument();
+				html.Load(await response.Content.ReadAsStreamAsync());
+				var photoboxes = new List<Photobox>();
+
+				Func<HtmlNode, Photobox> GetPhotoboxSelector(PhotoType type) =>
+					node => new Photobox(
+						http.BaseAddress + node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null),
+						http.BaseAddress + node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null),
+						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]").GetAttributeValue("href", null).Substring("/materieel/".Length),
+						node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a").InnerText,
+						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]").InnerText,
+						type,
+						node.SelectSingleNode("figure/figcaption/div[3]/div").InnerText,
+						node.SelectSingleNode("figure/figcaption/div[4]/div/strong/a").InnerText
+					);
+
+				var typeDict = new Dictionary<PhotoType, string>() {
+					{ PhotoType.General, "Algemeen" },
+					{ PhotoType.Interior, "Interieur" },
+					{ PhotoType.Detail, "Detail" },
+				};
+				foreach ((PhotoType type, string? headerTitle) in typeDict) {
+					Func<HtmlNode, Photobox> selector = GetPhotoboxSelector(type);
+					HtmlNodeCollection? nodes = html.DocumentNode.SelectNodes($"/html/body/div[@class='container']/a[@name='{headerTitle}']/following-sibling::div[1]/div");
+					if (nodes != null) {
+						photoboxes.AddRange(nodes.Select(selector).Where(photobox => !blockedPhotographers.Contains(photobox.Photographer)));
+					}
+				}
+
+				if (photoboxes.Count > 0) {
+					Photobox chosen = photoboxes[random.Next(0, photoboxes.Count)];
+
+					string typeName = chosen.PhotoType switch {
+						PhotoType.General => "Foto",
+						PhotoType.Interior => "Interieurfoto",
+						PhotoType.Detail => "Detailfoto"
+					};
+
+					
+					try {
+						await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+					} catch (UnauthorizedException) {
+						return;
+					}
+		
+					await message.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode("📷"));
+					
+					await message.RespondAsync(dmb => dmb
+						.WithEmbed(new DiscordEmbedBuilder()
+							.WithAuthor(chosen.Photographer, $"{http.BaseAddress}/{chosen.Photographer}")
+							.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
+							.WithUrl(chosen.PageUrl)
+							.WithImageUrl(chosen.ImageUrl)
+							.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
+						)
+					);
+					return;
+				}
+			}
+		}
+	} catch (Exception e) {
+		Console.WriteLine(e.ToStringDemystified());
+		if (notifications != null) {
+			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}", e.Demystify());
+		}
 	}
+}
+
+var regex = new Regex(@"\d{3,6}");
+DateTime lastSend = DateTime.MinValue;
+discord.MessageCreated += (unused, args) => {
+	DateTime now = DateTime.UtcNow;
+	if ((now - lastSend).TotalMinutes > 1) {
+		MatchCollection matches = regex.Matches(args.Message.Content);
+		if (matches.Count > 0) {
+			lastSend = now;
+			_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Value).Distinct().ToArray());
+		}
+	}
+
 	return Task.CompletedTask;
 };
 
 await discord.ConnectAsync();
+await Task.Delay(-1);
