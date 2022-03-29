@@ -123,9 +123,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 					} catch (UnauthorizedException) {
 						return;
 					}
-		
-					await message.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode("📷"));
-					
+
 					lastSend = DateTime.UtcNow;
 					await message.RespondAsync(dmb => dmb
 						.WithEmbed(new DiscordEmbedBuilder()
