@@ -133,14 +133,16 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 var regex = new Regex(@"\d{3,6}");
 discord.MessageCreated += (unused, args) => {
-	MatchCollection matches = regex.Matches(args.Message.Content);
-	if (matches.Count > 0) {
-		if (DateTime.UtcNow - lastSend > cooldown) {
-			_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Value).Distinct().ToArray());
-		} else {
-			try {
-				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-			} catch (UnauthorizedException) { }
+	if (!args.Author.IsBot) {
+		MatchCollection matches = regex.Matches(args.Message.Content);
+		if (matches.Count > 0) {
+			if (DateTime.UtcNow - lastSend > cooldown) {
+				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Value).Distinct().ToArray());
+			} else {
+				try {
+					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+				} catch (UnauthorizedException) { }
+			}
 		}
 	}
 
