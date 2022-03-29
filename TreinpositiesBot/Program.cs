@@ -131,7 +131,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	}
 }
 
-var regex = new Regex(@"\b\d{3,6}\b");
+var regex = new Regex(@"(?:^|[^/@#\w])(?<number>[ \d]{3,})(?:$|[^/@#\w])");
 discord.MessageCreated += (unused, args) => {
 	if (!args.Author.IsBot) {
 		MatchCollection matches = regex.Matches(args.Message.Content);
