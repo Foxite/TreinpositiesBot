@@ -28,7 +28,7 @@ var http = new HttpClient(handler) {
 			new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)")
 		}
 	},
-	BaseAddress = new Uri("https://treinposities.nl")
+	BaseAddress = new Uri("https://treinposities.nl/")
 };
 
 string[] blockedPhotographers = (Environment.GetEnvironmentVariable("BLOCKED_PHOTOGRAPHERS") ?? "").Split(";");
@@ -50,8 +50,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	try {
 		foreach (string number in numbers) {
 			Uri vehicleUrl;
-			//https://treinposities.nl/?q=9556&q2=
-			string targetUri = $"/?q={Uri.EscapeDataString(number)}&q2=";
+			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 
 			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
 				string content = await response.Content.ReadAsStringAsync();
@@ -62,8 +61,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				}
 			}
 
-			string? pictureUrl = null;
-			using (HttpResponseMessage response = await http.GetAsync(vehicleUrl + "/foto")) {
+			using (HttpResponseMessage response = await http.GetAsync(Path.Combine(vehicleUrl.ToString(), "foto"))) {
 				response.EnsureSuccessStatusCode();
 				var html = new HtmlDocument();
 				html.Load(await response.Content.ReadAsStreamAsync());
@@ -71,8 +69,8 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 				Func<HtmlNode, Photobox> GetPhotoboxSelector(PhotoType type) =>
 					node => new Photobox(
-						http.BaseAddress + node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null),
-						http.BaseAddress + node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null),
+						new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null)).ToString(),
+						new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null)).ToString(),
 						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]").GetAttributeValue("href", null).Substring("/materieel/".Length),
 						node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a").InnerText,
 						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]").InnerText,
@@ -114,7 +112,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 					lastSend = DateTime.UtcNow;
 					await message.RespondAsync(dmb => dmb
 						.WithEmbed(new DiscordEmbedBuilder()
-							.WithAuthor(chosen.Photographer, $"{http.BaseAddress}/{chosen.Photographer}")
+							.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
 							.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
 							.WithUrl(chosen.PageUrl)
 							.WithImageUrl(chosen.ImageUrl)
