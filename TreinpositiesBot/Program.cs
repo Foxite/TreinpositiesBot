@@ -53,10 +53,27 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 
 			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
-				string content = await response.Content.ReadAsStringAsync();
 				if (response.StatusCode == HttpStatusCode.Found) {
 					vehicleUrl = response.Headers.Location!;
+				} else if (response.StatusCode == HttpStatusCode.OK) {
+					// /html/body/div[1]/h2
+					var html = new HtmlDocument();
+					html.Load(await response.Content.ReadAsStreamAsync());
+					HtmlNode? headerNode = html.DocumentNode.SelectSingleNode("/html/body/div[1]/h2");
+					if (headerNode != null && headerNode.InnerText == "Zoekresultaat") {
+						HtmlNodeCollection? resultRows = html.DocumentNode.SelectNodes("/html/body/div[1]/div");
+						HtmlNode? chosen = resultRows[random.Next(0, resultRows.Count)];
+						vehicleUrl = new Uri(http.BaseAddress, chosen.SelectSingleNode("div/div/a").GetAttributeValue("href", null));
+					} else {
+						continue;
+					}
 				} else {
+					string errorMessage = $"Got http {response.StatusCode} when getting {targetUri}: responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}";
+					Console.WriteLine(errorMessage);
+					if (notifications != null) {
+						await notifications.SendNotificationAsync(errorMessage, null);
+					}
+
 					continue;
 				}
 			}
