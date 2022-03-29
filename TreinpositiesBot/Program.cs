@@ -43,6 +43,9 @@ if (webhookUrl != null) {
 	}));
 }
 
+DateTime lastSend = DateTime.MinValue;
+string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
+TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
 async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	try {
 		foreach (string number in numbers) {
@@ -99,7 +102,6 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 						PhotoType.Interior => "Interieurfoto",
 						PhotoType.Detail => "Detailfoto"
 					};
-
 					
 					try {
 						await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
@@ -109,6 +111,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 		
 					await message.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode("📷"));
 					
+					lastSend = DateTime.UtcNow;
 					await message.RespondAsync(dmb => dmb
 						.WithEmbed(new DiscordEmbedBuilder()
 							.WithAuthor(chosen.Photographer, $"{http.BaseAddress}/{chosen.Photographer}")
@@ -131,14 +134,15 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 }
 
 var regex = new Regex(@"\d{3,6}");
-DateTime lastSend = DateTime.MinValue;
 discord.MessageCreated += (unused, args) => {
-	DateTime now = DateTime.UtcNow;
-	if ((now - lastSend).TotalMinutes > 1) {
-		MatchCollection matches = regex.Matches(args.Message.Content);
-		if (matches.Count > 0) {
-			lastSend = now;
+	MatchCollection matches = regex.Matches(args.Message.Content);
+	if (matches.Count > 0) {
+		if (DateTime.UtcNow - lastSend > cooldown) {
 			_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Value).Distinct().ToArray());
+		} else {
+			try {
+				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+			} catch (UnauthorizedException) { }
 		}
 	}
 
