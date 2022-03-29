@@ -3,10 +3,10 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["TreinpositiesBot/TreinpositiesBot.csproj", "TreinpositiesBot/"]
-RUN dotnet restore "TreinpositiesBot/TreinpositiesBot.csproj"
+COPY ["TreinpositiesBot.csproj", "TreinpositiesBot.csproj"]
+RUN dotnet restore "TreinpositiesBot.csproj"
 COPY . .
-WORKDIR "/src/TreinpositiesBot"
+RUN mv appsettings.json.example appsettings.json
 RUN dotnet build "TreinpositiesBot.csproj" -c Release -o /app/build
 
 FROM build AS publish
