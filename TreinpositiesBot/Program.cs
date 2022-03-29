@@ -149,7 +149,9 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 		string? noPhotosReactionEnvvar = Environment.GetEnvironmentVariable("NO_RESULTS_EMOTE");
 		if (noPhotosReactionEnvvar != null) {
-			await message.CreateReactionAsync(DiscordEmoji.FromName(discord, noPhotosReactionEnvvar, true));
+			try {
+				await message.CreateReactionAsync(DiscordEmoji.FromName(discord, noPhotosReactionEnvvar, true));
+			} catch (UnauthorizedException) { }
 		}
 	} catch (Exception e) {
 		Console.WriteLine(e.ToStringDemystified());
