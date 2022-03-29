@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 var discord = new DiscordClient(new DiscordConfiguration() {
 	Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
-	Intents = DiscordIntents.GuildMessages
+	Intents = DiscordIntents.GuildMessages | DiscordIntents.Guilds
 });
 
 discord.ClientErrored += (_, args) => {
