@@ -108,6 +108,8 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 					{ PhotoType.General, "Algemeen" },
 					{ PhotoType.Interior, "Interieur" },
 					{ PhotoType.Detail, "Detail" },
+					{ PhotoType.Cabin, "Cabine" },
+					{ PhotoType.EngineRoom, "Motorruimte" },
 				};
 				foreach ((PhotoType type, string? headerTitle) in typeDict) {
 					Func<HtmlNode, Photobox> selector = GetPhotoboxSelector(type);
@@ -123,7 +125,9 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 					string typeName = chosen.PhotoType switch {
 						PhotoType.General => "Foto",
 						PhotoType.Interior => "Interieurfoto",
-						PhotoType.Detail => "Detailfoto"
+						PhotoType.Detail => "Detailfoto",
+						PhotoType.Cabin => "Cabinefoto",
+						PhotoType.EngineRoom => "Motorruimtefoto"
 					};
 					
 					try {
