@@ -47,6 +47,7 @@ DateTime lastSend = DateTime.MinValue;
 string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
 TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
 async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
+	Photobox? chosen = null;
 	try {
 		foreach (string number in numbers) {
 			Uri vehicleUrl;
@@ -120,7 +121,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				}
 
 				if (photoboxes.Count > 0) {
-					Photobox chosen = photoboxes[random.Next(0, photoboxes.Count)];
+					chosen = photoboxes[random.Next(0, photoboxes.Count)];
 
 					string typeName = chosen.PhotoType switch {
 						PhotoType.General => "Foto",
@@ -171,7 +172,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	} catch (Exception e) {
 		Console.WriteLine(e.ToStringDemystified());
 		if (notifications != null) {
-			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}", e.Demystify());
+			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}; photo url: ${(chosen?.PageUrl ?? "null")}", e.Demystify());
 		}
 	}
 }
