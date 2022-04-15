@@ -129,23 +129,30 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 						PhotoType.Cabin => "Cabinefoto",
 						PhotoType.EngineRoom => "Motorruimtefoto"
 					};
-					
-					try {
-						await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
-					} catch (UnauthorizedException) {
-						return;
-					}
 
-					lastSend = DateTime.UtcNow;
-					await message.RespondAsync(dmb => dmb
-						.WithEmbed(new DiscordEmbedBuilder()
-							.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
-							.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
-							.WithUrl(chosen.PageUrl)
-							.WithImageUrl(chosen.ImageUrl)
-							.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
-						)
-					);
+					try {
+						try {
+							await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+						} catch (UnauthorizedException) {
+							// User blocked us
+							return;
+						}
+
+						// Only reset the cooldown if we actually get to respond.
+						// This is a tradeoff between respecting TP and being reasonable to users
+						lastSend = DateTime.UtcNow;
+						await message.RespondAsync(dmb => dmb
+							.WithEmbed(new DiscordEmbedBuilder()
+								.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
+								.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
+								.WithUrl(chosen.PageUrl)
+								.WithImageUrl(chosen.ImageUrl)
+								.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
+							)
+						);
+					} catch (NotFoundException) {
+						// Message deleted since we received it
+					}
 					return;
 				}
 			}
@@ -155,7 +162,11 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 		if (noPhotosReactionEnvvar != null) {
 			try {
 				await message.CreateReactionAsync(DiscordEmoji.FromName(discord, noPhotosReactionEnvvar, true));
-			} catch (UnauthorizedException) { }
+			} catch (UnauthorizedException) {
+				// User blocked us
+			} catch (NotFoundException) {
+				// Message deleted since we received it
+			}
 		}
 	} catch (Exception e) {
 		Console.WriteLine(e.ToStringDemystified());
@@ -175,7 +186,11 @@ discord.MessageCreated += (unused, args) => {
 			} else {
 				try {
 					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-				} catch (UnauthorizedException) { }
+				} catch (UnauthorizedException) {
+					// User blocked us
+				} catch (NotFoundException) {
+					// Message deleted since we received it
+				}
 			}
 		}
 	}
