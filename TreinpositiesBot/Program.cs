@@ -144,7 +144,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 						lastSend = DateTime.UtcNow;
 						await message.RespondAsync(dmb => dmb
 							.WithEmbed(new DiscordEmbedBuilder()
-								.WithAuthor(chosenPhotobox.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosenPhotobox.Photographer)).ToString())
+								.WithAuthor(chosenPhotobox.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosenPhotobox.Photographer.Replace(' ', '_'))).ToString())
 								.WithTitle($"{typeName} van {chosenPhotobox.Owner} {chosenPhotobox.VehicleType} {chosenPhotobox.VehicleNumber}")
 								.WithUrl(chosenPhotobox.PageUrl)
 								.WithImageUrl(chosenPhotobox.ImageUrl)
