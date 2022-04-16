@@ -189,7 +189,7 @@ discord.MessageCreated += (unused, args) => {
 		MatchCollection matches = regex.Matches(args.Message.Content);
 		if (matches.Count > 0) {
 			if (DateTime.UtcNow - lastSend > cooldown) {
-				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Value).Distinct().ToArray());
+				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Groups["number"].Value).Distinct().ToArray());
 			} else {
 				try {
 					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
