@@ -24,7 +24,7 @@ handler.AllowAutoRedirect = false;
 var http = new HttpClient(handler) {
 	DefaultRequestHeaders = {
 		UserAgent = {
-			new ProductInfoHeaderValue("TreinpositiesBot", "0.1"),
+			new ProductInfoHeaderValue("TreinpositiesBot", "0.2"),
 			new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)")
 		}
 	},
@@ -46,15 +46,60 @@ if (webhookUrl != null) {
 DateTime lastSend = DateTime.MinValue;
 string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
 TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
+
+async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
+	var html = new HtmlDocument();
+	using (HttpResponseMessage response = await http.GetAsync(Path.Combine(vehicleUri.ToString(), "foto"))) {
+		response.EnsureSuccessStatusCode();
+		html.Load(await response.Content.ReadAsStreamAsync());
+	}
+
+	var photoboxes = new List<Photobox>();
+
+	Func<HtmlNode, Photobox> GetPhotoboxSelector(PhotoType type) =>
+		node => new Photobox(
+			new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null)).ToString(),
+			new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null)).ToString(),
+			node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]").GetAttributeValue("href", null).Substring("/materieel/".Length),
+			node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a").InnerText,
+			node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]").InnerText,
+			type,
+			node.SelectSingleNode("figure/figcaption/div[3]/div").InnerText,
+			node.SelectSingleNode("figure/figcaption/div[4]/div/strong/a").InnerText
+		);
+
+	var typeDict = new Dictionary<PhotoType, string>() {
+		{PhotoType.General, "Algemeen"},
+		{PhotoType.Interior, "Interieur"},
+		{PhotoType.Detail, "Detail"},
+		{PhotoType.Cabin, "Cabine"},
+		{PhotoType.EngineRoom, "Motorruimte"},
+	};
+
+	foreach ((PhotoType type, string? headerTitle) in typeDict) {
+		Func<HtmlNode, Photobox> selector = GetPhotoboxSelector(type);
+		HtmlNodeCollection? nodes = html.DocumentNode.SelectNodes($"/html/body/div[@class='container']/a[@name='{headerTitle}']/following-sibling::div[1]/div");
+		if (nodes != null) {
+			photoboxes.AddRange(nodes.Select(selector).Where(photobox => !blockedPhotographers.Contains(photobox.Photographer)));
+		}
+	}
+
+	if (photoboxes.Count == 0) {
+		return null;
+	} else {
+		return photoboxes;
+	}
+}
+
 async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	try {
 		foreach (string number in numbers) {
-			Uri vehicleUrl;
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
+			IList<Photobox>? photoboxes = null;
 
 			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
-					vehicleUrl = response.Headers.Location!;
+					photoboxes = await GetPhotoboxesForVehicle(response.Headers.Location!);
 				} else if (response.StatusCode == HttpStatusCode.OK) {
 					var html = new HtmlDocument();
 					html.Load(await response.Content.ReadAsStreamAsync());
@@ -70,8 +115,14 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 						} else {
 							candidates = exactMatches;
 						}
-						HtmlNode chosen = candidates[random.Next(0, candidates.Count)];
-						vehicleUrl = new Uri(http.BaseAddress, chosen.GetAttributeValue("href", null));
+
+						candidates.Shuffle();
+						foreach (HtmlNode candidate in candidates) {
+							photoboxes = await GetPhotoboxesForVehicle(new Uri(http.BaseAddress, candidate.GetAttributeValue("href", null)));
+							if (photoboxes != null) {
+								break;
+							}
+						}
 					} else {
 						continue;
 					}
@@ -86,75 +137,34 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				}
 			}
 
-			using (HttpResponseMessage response = await http.GetAsync(Path.Combine(vehicleUrl.ToString(), "foto"))) {
-				response.EnsureSuccessStatusCode();
-				var html = new HtmlDocument();
-				html.Load(await response.Content.ReadAsStreamAsync());
-				var photoboxes = new List<Photobox>();
+			if (photoboxes != null) {
+				Photobox chosen = photoboxes[random.Next(0, photoboxes.Count)];
 
-				Func<HtmlNode, Photobox> GetPhotoboxSelector(PhotoType type) =>
-					node => new Photobox(
-						new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null)).ToString(),
-						new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null)).ToString(),
-						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]").GetAttributeValue("href", null).Substring("/materieel/".Length),
-						node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a").InnerText,
-						node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]").InnerText,
-						type,
-						node.SelectSingleNode("figure/figcaption/div[3]/div").InnerText,
-						node.SelectSingleNode("figure/figcaption/div[4]/div/strong/a").InnerText
-					);
-
-				var typeDict = new Dictionary<PhotoType, string>() {
-					{ PhotoType.General, "Algemeen" },
-					{ PhotoType.Interior, "Interieur" },
-					{ PhotoType.Detail, "Detail" },
-					{ PhotoType.Cabin, "Cabine" },
-					{ PhotoType.EngineRoom, "Motorruimte" },
+				string typeName = chosen.PhotoType switch {
+					PhotoType.General => "Foto",
+					PhotoType.Interior => "Interieurfoto",
+					PhotoType.Detail => "Detailfoto",
+					PhotoType.Cabin => "Cabinefoto",
+					PhotoType.EngineRoom => "Motorruimtefoto"
 				};
-				foreach ((PhotoType type, string? headerTitle) in typeDict) {
-					Func<HtmlNode, Photobox> selector = GetPhotoboxSelector(type);
-					HtmlNodeCollection? nodes = html.DocumentNode.SelectNodes($"/html/body/div[@class='container']/a[@name='{headerTitle}']/following-sibling::div[1]/div");
-					if (nodes != null) {
-						photoboxes.AddRange(nodes.Select(selector).Where(photobox => !blockedPhotographers.Contains(photobox.Photographer)));
-					}
-				}
-
-				if (photoboxes.Count > 0) {
-					Photobox chosen = photoboxes[random.Next(0, photoboxes.Count)];
-
-					string typeName = chosen.PhotoType switch {
-						PhotoType.General => "Foto",
-						PhotoType.Interior => "Interieurfoto",
-						PhotoType.Detail => "Detailfoto",
-						PhotoType.Cabin => "Cabinefoto",
-						PhotoType.EngineRoom => "Motorruimtefoto"
-					};
-
-					try {
-						try {
-							await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
-						} catch (UnauthorizedException) {
-							// User blocked us
-							return;
-						}
-
-						// Only reset the cooldown if we actually get to respond.
-						// This is a tradeoff between respecting TP and being reasonable to users
-						lastSend = DateTime.UtcNow;
-						await message.RespondAsync(dmb => dmb
-							.WithEmbed(new DiscordEmbedBuilder()
-								.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
-								.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
-								.WithUrl(chosen.PageUrl)
-								.WithImageUrl(chosen.ImageUrl)
-								.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
-							)
-						);
-					} catch (NotFoundException) {
-						// Message deleted since we received it
-					}
+				
+				try {
+					await message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+				} catch (UnauthorizedException) {
 					return;
 				}
+
+				lastSend = DateTime.UtcNow;
+				await message.RespondAsync(dmb => dmb
+					.WithEmbed(new DiscordEmbedBuilder()
+						.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
+						.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
+						.WithUrl(chosen.PageUrl)
+						.WithImageUrl(chosen.ImageUrl)
+						.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
+					)
+				);
+				return;
 			}
 		}
 
@@ -162,11 +172,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 		if (noPhotosReactionEnvvar != null) {
 			try {
 				await message.CreateReactionAsync(DiscordEmoji.FromName(discord, noPhotosReactionEnvvar, true));
-			} catch (UnauthorizedException) {
-				// User blocked us
-			} catch (NotFoundException) {
-				// Message deleted since we received it
-			}
+			} catch (UnauthorizedException) { }
 		}
 	} catch (Exception e) {
 		Console.WriteLine(e.ToStringDemystified());
@@ -186,11 +192,7 @@ discord.MessageCreated += (unused, args) => {
 			} else {
 				try {
 					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-				} catch (UnauthorizedException) {
-					// User blocked us
-				} catch (NotFoundException) {
-					// Message deleted since we received it
-				}
+				} catch (UnauthorizedException) { }
 			}
 		}
 	}
