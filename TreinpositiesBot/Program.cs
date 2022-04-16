@@ -92,6 +92,7 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 }
 
 async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
+	Photobox? chosenPhotobox = null;
 	try {
 		foreach (string number in numbers) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
@@ -138,9 +139,9 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 			}
 
 			if (photoboxes != null) {
-				Photobox chosen = photoboxes[random.Next(0, photoboxes.Count)];
-
-				string typeName = chosen.PhotoType switch {
+				chosenPhotobox = photoboxes[random.Next(0, photoboxes.Count)];
+				
+				string typeName = chosenPhotobox.PhotoType switch {
 					PhotoType.General => "Foto",
 					PhotoType.Interior => "Interieurfoto",
 					PhotoType.Detail => "Detailfoto",
@@ -157,11 +158,11 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				lastSend = DateTime.UtcNow;
 				await message.RespondAsync(dmb => dmb
 					.WithEmbed(new DiscordEmbedBuilder()
-						.WithAuthor(chosen.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosen.Photographer)).ToString())
-						.WithTitle($"{typeName} van {chosen.Owner} {chosen.VehicleType} {chosen.VehicleNumber}")
-						.WithUrl(chosen.PageUrl)
-						.WithImageUrl(chosen.ImageUrl)
-						.WithFooter($"© {chosen.Photographer}, {chosen.Taken} | Geen reacties meer? Blokkeer mij")
+						.WithAuthor(chosenPhotobox.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosenPhotobox.Photographer.Replace(' ', '_'))).ToString())
+						.WithTitle($"{typeName} van {chosenPhotobox.Owner} {chosenPhotobox.VehicleType} {chosenPhotobox.VehicleNumber}")
+						.WithUrl(chosenPhotobox.PageUrl)
+						.WithImageUrl(chosenPhotobox.ImageUrl)
+						.WithFooter($"© {chosenPhotobox.Photographer}, {chosenPhotobox.Taken} | Geen reacties meer? Blokkeer mij")
 					)
 				);
 				return;
@@ -177,7 +178,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	} catch (Exception e) {
 		Console.WriteLine(e.ToStringDemystified());
 		if (notifications != null) {
-			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}", e.Demystify());
+			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}; photo url: ${(chosenPhotobox?.PageUrl ?? "null")}", e.Demystify());
 		}
 	}
 }
