@@ -95,15 +95,8 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	Photobox? chosenPhotobox = null;
 	try {
 		foreach (string number in numbers) {
-			IList<Photobox>? photoboxes = null;
-			if (number == "4240") {
-				// HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-				// HACK   IF YOU SEE THIS AND IT'S NOT KINGS DAY ANYMORE REVERT THIS COMMIT   HACK
-				// HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-				photoboxes = (await GetPhotoboxesForVehicle(new Uri("https://treinposities.nl/voertuig/ns_icm_4240")))!.Where(pb => pb.PhotoType == PhotoType.General).TakeLast(3).ToList();
-				goto pickPhotoAndSend;
-			}
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
+			IList<Photobox>? photoboxes = null;
 
 			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
@@ -145,7 +138,6 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				}
 			}
 
-			pickPhotoAndSend:
 			if (photoboxes != null) {
 				chosenPhotobox = photoboxes[random.Next(0, photoboxes.Count)];
 				
