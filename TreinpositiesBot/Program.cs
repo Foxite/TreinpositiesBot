@@ -118,7 +118,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 						}
 
 						candidates.Shuffle();
-						foreach (HtmlNode candidate in candidates) {
+						foreach (HtmlNode candidate in candidates.Take(5)) {
 							photoboxes = await GetPhotoboxesForVehicle(new Uri(http.BaseAddress, candidate.GetAttributeValue("href", null)));
 							if (photoboxes != null) {
 								break;
