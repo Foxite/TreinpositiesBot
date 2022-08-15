@@ -57,16 +57,31 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 	var photoboxes = new List<Photobox>();
 
 	Func<HtmlNode, Photobox> GetPhotoboxSelector(PhotoType type) =>
-		node => new Photobox(
-			new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a").GetAttributeValue("href", null)).ToString(),
-			new Uri(http.BaseAddress, node.SelectSingleNode("figure/div/a/img").GetAttributeValue("src", null)).ToString(),
-			node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]").GetAttributeValue("href", null).Substring("/materieel/".Length),
-			node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a").InnerText,
-			node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]").InnerText,
-			type,
-			node.SelectSingleNode("figure/figcaption/div[3]/div").InnerText,
-			node.SelectSingleNode("figure/figcaption/div[4]/div/strong/a").InnerText
-		);
+		node => {
+			HtmlNode pageUrl = node.SelectSingleNode("figure/div/a");
+			HtmlNode imageUrl = node.SelectSingleNode("figure/div/a/img");
+			HtmlNode? owner = node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[2]");
+			HtmlNode? vehicleType = node.SelectSingleNode("figure/figcaption/div[2]/div/strong/a");
+			HtmlNode vehicleNumber = node.SelectSingleNode("figure/figcaption/div/div[2]/strong/a[1]");
+			HtmlNode taken = node.SelectSingleNode("figure/figcaption/div[3]/div");
+			HtmlNode photographer = node.SelectSingleNode($"figure/figcaption/div[{(vehicleType == null ? 3 : 4)}]/div/strong/a");
+
+			string ownerString = owner.GetAttributeValue("href", null).Substring("/materieel/".Length);
+			if (string.IsNullOrWhiteSpace(ownerString)) {
+				ownerString = owner.InnerText;
+			}
+			
+			return new Photobox(
+				new Uri(http.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
+				new Uri(http.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
+				ownerString,
+				vehicleType?.InnerText,
+				vehicleNumber.InnerText,
+				type,
+				taken.InnerText,
+				photographer.InnerText
+			);
+		};
 
 	var typeDict = new Dictionary<PhotoType, string>() {
 		{PhotoType.General, "Algemeen"},
@@ -159,7 +174,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 				await message.RespondAsync(dmb => dmb
 					.WithEmbed(new DiscordEmbedBuilder()
 						.WithAuthor(chosenPhotobox.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosenPhotobox.Photographer.Replace(' ', '_'))).ToString())
-						.WithTitle($"{typeName} van {chosenPhotobox.Owner} {chosenPhotobox.VehicleType} {chosenPhotobox.VehicleNumber}")
+						.WithTitle($"{typeName} van {chosenPhotobox.Identity}")
 						.WithUrl(chosenPhotobox.PageUrl)
 						.WithImageUrl(chosenPhotobox.ImageUrl)
 						.WithFooter($"© {chosenPhotobox.Photographer}, {chosenPhotobox.Taken} | Geen reacties meer? Blokkeer mij")
