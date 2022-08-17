@@ -107,7 +107,8 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 }
 
 async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
-	Photobox? chosenPhotobox = null;
+	Photobox? chosenPhotobox = null; 
+	string? vehicle = null;
 	try {
 		foreach (string number in numbers) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
@@ -115,6 +116,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 			using (HttpResponseMessage response = await http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
+					vehicle = response.Headers.Location!.ToString();
 					photoboxes = await GetPhotoboxesForVehicle(response.Headers.Location!);
 				} else if (response.StatusCode == HttpStatusCode.OK) {
 					var html = new HtmlDocument();
@@ -134,7 +136,9 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 						candidates.Shuffle();
 						foreach (HtmlNode candidate in candidates.Take(5)) {
-							photoboxes = await GetPhotoboxesForVehicle(new Uri(http.BaseAddress, candidate.GetAttributeValue("href", null)));
+							string candidatePhotosUrl = candidate.GetAttributeValue("href", null);
+							vehicle = candidatePhotosUrl;
+							photoboxes = await GetPhotoboxesForVehicle(new Uri(http.BaseAddress, candidatePhotosUrl));
 							if (photoboxes != null) {
 								break;
 							}
@@ -191,9 +195,11 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 			} catch (UnauthorizedException) { }
 		}
 	} catch (Exception e) {
+		string report = $"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}; vehicle url: {(vehicle ?? "null")}; photo url: ${(chosenPhotobox?.PageUrl ?? "null")}";
+		Console.WriteLine(report);
 		Console.WriteLine(e.ToStringDemystified());
 		if (notifications != null) {
-			await notifications.SendNotificationAsync($"Error responding to message {message.Id} ({message.JumpLink}), numbers: {string.Join(", ", numbers)}; photo url: ${(chosenPhotobox?.PageUrl ?? "null")}", e.Demystify());
+			await notifications.SendNotificationAsync(report, e.Demystify());
 		}
 	}
 }
