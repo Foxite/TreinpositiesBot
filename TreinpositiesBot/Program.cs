@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
@@ -43,7 +44,7 @@ if (webhookUrl != null) {
 	}));
 }
 
-DateTime lastSend = DateTime.MinValue;
+var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
 string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
 TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
 
@@ -174,7 +175,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 					return;
 				}
 
-				lastSend = DateTime.UtcNow;
+				lastSendPerUser[message.Author.Id] = DateTime.UtcNow;
 				await message.RespondAsync(dmb => dmb
 					.WithEmbed(new DiscordEmbedBuilder()
 						.WithAuthor(chosenPhotobox.Photographer, new Uri(http.BaseAddress, Path.Combine("fotos", chosenPhotobox.Photographer.Replace(' ', '_'))).ToString())
@@ -217,7 +218,7 @@ discord.MessageCreated += (unused, args) => {
 	if (!args.Author.IsBot) {
 		MatchCollection matches = regex.Matches(args.Message.Content);
 		if (matches.Count > 0) {
-			if (DateTime.UtcNow - lastSend > cooldown) {
+			if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
 				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray());
 			} else {
 				try {
