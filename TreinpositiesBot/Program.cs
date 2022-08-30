@@ -75,12 +75,12 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 			return new Photobox(
 				new Uri(http.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
 				new Uri(http.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
-				ownerString,
-				HtmlEntity.DeEntitize(vehicleType?.InnerText),
-				HtmlEntity.DeEntitize(vehicleNumber.InnerText),
+				ownerString.Trim(),
+				HtmlEntity.DeEntitize(vehicleType?.InnerText).Trim(),
+				HtmlEntity.DeEntitize(vehicleNumber.InnerText).Trim(),
 				type,
-				HtmlEntity.DeEntitize(taken.InnerText),
-				HtmlEntity.DeEntitize(photographer.InnerText)
+				HtmlEntity.DeEntitize(taken.InnerText).Trim(),
+				HtmlEntity.DeEntitize(photographer.InnerText).Trim()
 			);
 		};
 
