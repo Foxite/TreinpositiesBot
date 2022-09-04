@@ -205,15 +205,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	}
 }
 
-// Regex consists of 3 parts:
-// (?:^|[^/@#\w\n!:])
-//   Non capturing group which matches anything except the character set you see. Start of the string will also match.
-//   The purpose of these characters is to isolate the number while not matching mentions, emotes, or urls. Mentions will have a number prefixed by a @, # or !, emotes have :, and urls may have /.
-// (?<number>(?: *\d *){3,})
-//   Named capture group that matches a sequence of at least 3 numbers and ignores any spaces in between. The value of this capture group is trimmed and searched for in Treinposities.
-// (?:$|[^/@#\w\n:])
-//   Similar purpose to the first part.
-var regex = new Regex(@"(?:^|[^/@#\w\n!:])(?<number>(?: *\d *){3,})(?:$|[^/@#\w\n:])");
+var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})");
 discord.MessageCreated += (unused, args) => {
 	if (!args.Author.IsBot) {
 		MatchCollection matches = regex.Matches(args.Message.Content);
