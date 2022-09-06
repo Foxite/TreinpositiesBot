@@ -205,7 +205,7 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	}
 }
 
-var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})");
+var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
 discord.MessageCreated += (unused, args) => {
 	if (!args.Author.IsBot) {
 		MatchCollection matches = regex.Matches(args.Message.Content);
