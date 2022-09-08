@@ -107,11 +107,11 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 	}
 }
 
-async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
+async Task LookupTrainPicsAndSend(DiscordMessage message, (string Number, string? Author)[] numbers) {
 	Photobox? chosenPhotobox = null; 
 	string? vehicle = null;
 	try {
-		foreach (string number in numbers) {
+		foreach ((string number, string? filterAuthor) in numbers) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 			IList<Photobox>? photoboxes = null;
 
@@ -159,6 +159,13 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 			}
 
 			if (photoboxes != null) {
+				if (filterAuthor != null) {
+					var filteredPhotoboxes = photoboxes.Where(photobox => photobox.Photographer == filterAuthor).ToList();
+					if (filteredPhotoboxes.Count > 0) {
+						photoboxes = filteredPhotoboxes;
+					}
+				}
+				
 				chosenPhotobox = photoboxes[random.Next(0, photoboxes.Count)];
 				
 				string typeName = chosenPhotobox.PhotoType switch {
@@ -205,13 +212,13 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 	}
 }
 
-var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
+var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)\s*(?<username>[A-z0-9\-_]+)?");
 discord.MessageCreated += (unused, args) => {
 	if (!args.Author.IsBot) {
 		MatchCollection matches = regex.Matches(args.Message.Content);
 		if (matches.Count > 0) {
 			if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
-				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray());
+				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => (match.Groups["number"].Value.Trim(), match.Groups["username"]?.Value)).Distinct().ToArray());
 			} else {
 				try {
 					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
