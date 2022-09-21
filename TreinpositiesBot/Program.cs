@@ -207,16 +207,25 @@ async Task LookupTrainPicsAndSend(DiscordMessage message, string[] numbers) {
 
 var regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
 discord.MessageCreated += (unused, args) => {
-	if (!args.Author.IsBot) {
-		MatchCollection matches = regex.Matches(args.Message.Content);
-		if (matches.Count > 0) {
-			if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
-				_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray());
-			} else {
-				try {
-					return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-				} catch (UnauthorizedException) { }
-			}
+	if (args.Guild != null) {
+		Permissions perms = args.Channel.PermissionsFor(args.Guild.CurrentMember);
+		if (!perms.HasFlag(args.Channel.IsThread ? Permissions.SendMessagesInThreads : Permissions.SendMessages)) {
+			return Task.CompletedTask;
+		}
+	}
+
+	if (args.Author.IsBot) {
+		return Task.CompletedTask;
+	}
+
+	MatchCollection matches = regex.Matches(args.Message.Content);
+	if (matches.Count > 0) {
+		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
+			_ = LookupTrainPicsAndSend(args.Message, matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray());
+		} else {
+			try {
+				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+			} catch (UnauthorizedException) { }
 		}
 	}
 
