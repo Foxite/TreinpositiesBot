@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
@@ -48,6 +49,24 @@ var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
 string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
 TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
 
+[return: NotNullIfNotNull("node")]
+string? GetText(HtmlNode? node) {
+	if (node == null) {
+		return null;
+	}
+
+	if (node.NodeType == HtmlNodeType.Text) {
+		return HtmlEntity.DeEntitize(node.InnerText).Trim();
+	}
+
+	string ret = "";
+	foreach (HtmlNode childNode in node.ChildNodes) {
+		ret += GetText(childNode);
+	}
+
+	return ret;
+}
+
 async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 	var html = new HtmlDocument();
 	using (HttpResponseMessage response = await http.GetAsync(Path.Combine(vehicleUri.ToString(), "foto"))) {
@@ -76,11 +95,11 @@ async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 				new Uri(http.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
 				new Uri(http.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
 				ownerString.Trim(),
-				HtmlEntity.DeEntitize(vehicleType?.InnerText).Trim(),
-				HtmlEntity.DeEntitize(vehicleNumber.InnerText).Trim(),
+				GetText(vehicleType),
+				GetText(vehicleNumber),
 				type,
-				HtmlEntity.DeEntitize(taken.InnerText).Trim(),
-				HtmlEntity.DeEntitize(photographer.InnerText).Trim()
+				GetText(taken),
+				GetText(photographer)
 			);
 		};
 
