@@ -21,17 +21,19 @@ discord.ClientErrored += (_, args) => {
 	return Task.CompletedTask;
 };
 
+static void SetupHttp(HttpClient http) {
+	http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.2"));
+	http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
+	http.BaseAddress = new Uri("https://treinposities.nl/");
+}
+
 var handler = new HttpClientHandler();
 handler.AllowAutoRedirect = false;
-var http = new HttpClient(handler) {
-	DefaultRequestHeaders = {
-		UserAgent = {
-			new ProductInfoHeaderValue("TreinpositiesBot", "0.2"),
-			new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)")
-		}
-	},
-	BaseAddress = new Uri("https://treinposities.nl/")
-};
+var http = new HttpClient(handler);
+var httpRedirect = new HttpClient();
+
+SetupHttp(http);
+SetupHttp(httpRedirect);
 
 string[] blockedPhotographers = (Environment.GetEnvironmentVariable("BLOCKED_PHOTOGRAPHERS") ?? "").Split(";");
 
@@ -69,7 +71,7 @@ string? GetText(HtmlNode? node) {
 
 async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 	var html = new HtmlDocument();
-	using (HttpResponseMessage response = await http.GetAsync(Path.Combine(vehicleUri.ToString(), "foto"))) {
+	using (HttpResponseMessage response = await httpRedirect.GetAsync(Path.Combine(vehicleUri.ToString(), "foto"))) {
 		response.EnsureSuccessStatusCode();
 		html.Load(await response.Content.ReadAsStreamAsync());
 	}
