@@ -16,7 +16,7 @@
       <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
       <PackageReference Include="DSharpPlus" Version="4.3.0-testing-network-errors-1" />
       <PackageReference Include="Foxite.Common" Version="1.8.1" />
-      <PackageReference Include="HtmlAgilityPack" Version="1.11.45" />
+      <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
     </ItemGroup>
 
 </Project>
