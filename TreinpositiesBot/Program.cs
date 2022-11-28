@@ -50,12 +50,12 @@ var host = Host.CreateDefaultBuilder()
 		});
 		
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
+		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
 	})
 	.Build();
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 var coreConfig = host.Services.GetRequiredService<IOptionsMonitor<CoreConfig>>();
-var random = host.Services.GetRequiredService<Random>();
 var discord = host.Services.GetRequiredService<DiscordClient>();
 
 var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
@@ -101,11 +101,10 @@ discord.MessageCreated += (unused, args) => {
 	if (chosenSource != null) {
 		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
 			_ = Task.Run(async () => {
-				IReadOnlyList<Photobox>? photoboxes = null;
 				Photobox? photobox = null;
 				try {
-					photoboxes = await chosenSource.GetPhotos(ids);
-					if (photoboxes == null || photoboxes.Count == 0) {
+					photobox = await chosenSource.GetPhoto(ids);
+					if (photobox == null) {
 						if (coreConfig.CurrentValue.NoResultsEmote != null) {
 							try {
 								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
@@ -121,8 +120,6 @@ discord.MessageCreated += (unused, args) => {
 							// User blocked bot
 							return;
 						}
-
-						photobox = photoboxes[random.Next(0, photoboxes.Count)];
 
 						string typeName = photobox.PhotoType switch {
 							PhotoType.General => "Foto",

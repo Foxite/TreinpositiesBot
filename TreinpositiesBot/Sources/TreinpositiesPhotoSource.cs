@@ -13,11 +13,13 @@ public class TreinpositiesPhotoSource : PhotoSource {
 	private readonly IOptionsMonitor<Options> m_Options;
 	private readonly HttpClient m_Http;
 	private readonly ILogger<TreinpositiesPhotoSource> m_Logger;
+	private readonly Random m_Random;
 
-	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger) {
+	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger, Random random) {
 		m_Options = options;
 		m_Http = http;
 		m_Logger = logger;
+		m_Random = random;
 	}
 	
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
@@ -25,7 +27,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();
 	}
 
-	public async override Task<IReadOnlyList<Photobox>?> GetPhotos(IReadOnlyCollection<string> ids) {
+	public async override Task<Photobox?> GetPhoto(IReadOnlyCollection<string> ids) {
 		foreach (string number in ids) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 			List<Photobox>? photoboxes = null;
@@ -67,7 +69,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 			}
 
 			if (photoboxes != null) {
-				return photoboxes;
+				return photoboxes[m_Random.Next(0, photoboxes.Count)];
 			}
 		}
 
@@ -98,16 +100,16 @@ public class TreinpositiesPhotoSource : PhotoSource {
 					ownerString = HtmlEntity.DeEntitize(owner.InnerText);
 				}
 
-				string photographerText = GetText(photographer);
+				string photographerText = Util.GetText(photographer);
 				
 				return new Photobox(
 					new Uri(m_Options.CurrentValue.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
 					new Uri(m_Options.CurrentValue.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
 					ownerString.Trim(),
-					GetText(vehicleType),
-					GetText(vehicleNumber),
+					Util.GetText(vehicleType),
+					Util.GetText(vehicleNumber),
 					type,
-					GetText(taken),
+					Util.GetText(taken),
 					photographerText,
 					new Uri(m_Options.CurrentValue.BaseAddress, Path.Combine("fotos", photographerText.Replace(' ', '_'))).ToString()
 				);
@@ -134,24 +136,6 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		} else {
 			return photoboxes;
 		}
-	}
-
-	[return: NotNullIfNotNull("node")]
-	static string? GetText(HtmlNode? node) {
-		if (node == null) {
-			return null;
-		}
-
-		if (node.NodeType == HtmlNodeType.Text) {
-			return HtmlEntity.DeEntitize(node.InnerText).Trim();
-		}
-
-		string ret = "";
-		foreach (HtmlNode childNode in node.ChildNodes) {
-			ret += GetText(childNode);
-		}
-
-		return ret;
 	}
 
 	public class Options {
