@@ -43,7 +43,7 @@ var host = Host.CreateDefaultBuilder()
 		isc.AddSingleton(isp => {
 			var ret = new HttpClient(isp.GetRequiredService<HttpClientHandler>());
 
-			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.2"));
+			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.3"));
 			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
 
 			return ret;
@@ -55,11 +55,10 @@ var host = Host.CreateDefaultBuilder()
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 var coreConfig = host.Services.GetRequiredService<IOptionsMonitor<CoreConfig>>();
+var random = host.Services.GetRequiredService<Random>();
 var discord = host.Services.GetRequiredService<DiscordClient>();
-discord.ClientErrored += (_, args) => {
-	logger.LogError(args.Exception.Demystify(), "Discord client error");
-	return Task.CompletedTask;
-};
+
+var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
 
 DiscordWebhookLibNotificationSender? notifications = null;
 string? webhookUrl = coreConfig.CurrentValue.ErrorWebhookUrl;
@@ -69,8 +68,10 @@ if (!string.IsNullOrWhiteSpace(webhookUrl)) {
 	}));
 }
 
-var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
-TimeSpan cooldown = TimeSpan.FromSeconds(coreConfig.CurrentValue.CooldownSeconds);
+discord.ClientErrored += (_, args) => {
+	logger.LogError(args.Exception.Demystify(), "Discord client error");
+	return Task.CompletedTask;
+};
 
 discord.MessageCreated += (unused, args) => {
 	if (args.Guild != null) {
@@ -98,12 +99,13 @@ discord.MessageCreated += (unused, args) => {
 	}
 	
 	if (chosenSource != null) {
-		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
+		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
 			_ = Task.Run(async () => {
+				IReadOnlyList<Photobox>? photoboxes = null;
 				Photobox? photobox = null;
 				try {
-					photobox = await chosenSource.GetPhoto(ids);
-					if (photobox == null) {
+					photoboxes = await chosenSource.GetPhotos(ids);
+					if (photoboxes == null || photoboxes.Count == 0) {
 						if (coreConfig.CurrentValue.NoResultsEmote != null) {
 							try {
 								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
@@ -119,6 +121,8 @@ discord.MessageCreated += (unused, args) => {
 							// User blocked bot
 							return;
 						}
+
+						photobox = photoboxes[random.Next(0, photoboxes.Count)];
 
 						string typeName = photobox.PhotoType switch {
 							PhotoType.General => "Foto",
@@ -140,7 +144,7 @@ discord.MessageCreated += (unused, args) => {
 						);
 					}
 				} catch (Exception ex) {
-					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${(photobox?.PageUrl ?? "null")}";
+					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
 					
 					logger.LogCritical(ex, report);
 					

@@ -12,13 +12,11 @@ public class TreinpositiesPhotoSource : PhotoSource {
 	
 	private readonly IOptionsMonitor<Options> m_Options;
 	private readonly HttpClient m_Http;
-	private readonly Random m_Random;
 	private readonly ILogger<TreinpositiesPhotoSource> m_Logger;
 
-	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, Random random, ILogger<TreinpositiesPhotoSource> logger) {
+	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger) {
 		m_Options = options;
 		m_Http = http;
-		m_Random = random;
 		m_Logger = logger;
 	}
 	
@@ -27,10 +25,10 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();
 	}
 
-	public async override Task<Photobox?> GetPhoto(IReadOnlyCollection<string> ids) {
+	public async override Task<IReadOnlyList<Photobox>?> GetPhotos(IReadOnlyCollection<string> ids) {
 		foreach (string number in ids) {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
-			IList<Photobox>? photoboxes = null;
+			List<Photobox>? photoboxes = null;
 
 			using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(m_Options.CurrentValue.BaseAddress, targetUri), HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
@@ -40,9 +38,9 @@ public class TreinpositiesPhotoSource : PhotoSource {
 					html.Load(await response.Content.ReadAsStreamAsync());
 					HtmlNode? headerNode = html.DocumentNode.SelectSingleNode("/html/body/div[1]/h2");
 					if (headerNode != null && headerNode.InnerText == "Zoekresultaat") {
-						IList<HtmlNode> resultRows = html.DocumentNode.SelectNodes("/html/body/div[1]/div/div/div/a");
+						HtmlNodeCollection resultRows = html.DocumentNode.SelectNodes("/html/body/div[1]/div/div/div/a");
 						var exactMatchRegex = new Regex(@$"\b{number}\b");
-						IList<HtmlNode> exactMatches = resultRows.Where(row => exactMatchRegex.IsMatch(row.InnerText)).ToList();
+						List<HtmlNode> exactMatches = resultRows.Where(row => exactMatchRegex.IsMatch(row.InnerText)).ToList();
 
 						IList<HtmlNode> candidates;
 						if (exactMatches.Count == 0) {
@@ -69,7 +67,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 			}
 
 			if (photoboxes != null) {
-				return photoboxes[m_Random.Next(0, photoboxes.Count)];
+				return photoboxes;
 			}
 		}
 
