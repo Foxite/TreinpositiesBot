@@ -10,14 +10,15 @@ public class TreinpositiesPhotoSource : PhotoSource {
 	private readonly HttpClient m_Http;
 	private readonly string[] m_BlockedPhotographers;
 	private readonly Random m_Random;
-	private readonly Regex m_Regex;
+	private readonly Regex m_TrainNumberRegex;
 
 	public TreinpositiesPhotoSource() {
 		// TODO DI
 		m_BlockedPhotographers = (Environment.GetEnvironmentVariable("BLOCKED_PHOTOGRAPHERS") ?? "").Split(";");
 
 		m_Random = new Random();
-
+		
+		// TODO find a way to configure redirects per request.
 		m_Http = new HttpClient(new HttpClientHandler() {
 			AllowAutoRedirect = false
 		});
@@ -26,11 +27,11 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		m_Http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
 		m_Http.BaseAddress = new Uri("https://treinposities.nl/");
 		
-		m_Regex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
+		m_TrainNumberRegex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
 	}
 	
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
-		MatchCollection matches = m_Regex.Matches(message);
+		MatchCollection matches = m_TrainNumberRegex.Matches(message);
 		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();
 	}
 
