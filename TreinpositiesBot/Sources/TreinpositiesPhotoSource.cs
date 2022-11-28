@@ -1,37 +1,29 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace TreinpositiesBot;
 
 public class TreinpositiesPhotoSource : PhotoSource {
+	private static readonly Regex TrainNumberRegex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
+	
+	private readonly IOptionsMonitor<Options> m_Options;
 	private readonly HttpClient m_Http;
-	private readonly string[] m_BlockedPhotographers;
 	private readonly Random m_Random;
-	private readonly Regex m_TrainNumberRegex;
+	private readonly ILogger<TreinpositiesPhotoSource> m_Logger;
 
-	public TreinpositiesPhotoSource() {
-		// TODO DI
-		m_BlockedPhotographers = (Environment.GetEnvironmentVariable("BLOCKED_PHOTOGRAPHERS") ?? "").Split(";");
-
-		m_Random = new Random();
-		
-		// TODO find a way to configure redirects per request.
-		m_Http = new HttpClient(new HttpClientHandler() {
-			AllowAutoRedirect = false
-		});
-		
-		m_Http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.2"));
-		m_Http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
-		m_Http.BaseAddress = new Uri("https://treinposities.nl/");
-		
-		m_TrainNumberRegex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
+	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, Random random, ILogger<TreinpositiesPhotoSource> logger) {
+		m_Options = options;
+		m_Http = http;
+		m_Random = random;
+		m_Logger = logger;
 	}
 	
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
-		MatchCollection matches = m_TrainNumberRegex.Matches(message);
+		MatchCollection matches = TrainNumberRegex.Matches(message);
 		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();
 	}
 
@@ -40,7 +32,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 			IList<Photobox>? photoboxes = null;
 
-			using (HttpResponseMessage response = await m_Http.GetAsync(targetUri, HttpCompletionOption.ResponseHeadersRead)) {
+			using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(m_Options.CurrentValue.BaseAddress, targetUri), HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
 					photoboxes = await GetPhotoboxesForVehicle(response.Headers.Location!);
 				} else if (response.StatusCode == HttpStatusCode.OK) {
@@ -62,7 +54,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 						candidates.Shuffle();
 						foreach (HtmlNode candidate in candidates.Take(5)) {
 							string candidatePhotosUrl = candidate.GetAttributeValue("href", null);
-							photoboxes = await GetPhotoboxesForVehicle(new Uri(m_Http.BaseAddress, candidatePhotosUrl));
+							photoboxes = await GetPhotoboxesForVehicle(new Uri(m_Options.CurrentValue.BaseAddress, candidatePhotosUrl));
 							if (photoboxes != null) {
 								break;
 							}
@@ -71,10 +63,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 						continue;
 					}
 				} else {
-					// TODO logger
-					string errorMessage = $"Got http {response.StatusCode} when getting {targetUri} based on id {number}, all numbers: {string.Join(", ", ids)}";
-					Console.WriteLine(errorMessage);
-
+					m_Logger.LogError("Got http {ResponseStatusCode} when getting {TargetUri} based on id {Number}, all numbers: {Ids}", response.StatusCode, targetUri, number, string.Join(", ", ids));
 					continue;
 				}
 			}
@@ -89,7 +78,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 
 	async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
 		var html = new HtmlDocument();
-		using (HttpResponseMessage response = await m_Http.GetAsync(Path.Combine(vehicleUri.ToString(), "foto"))) {
+		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(m_Options.CurrentValue.BaseAddress, Path.Combine(vehicleUri.ToString(), "foto")))) {
 			response.EnsureSuccessStatusCode();
 			html.Load(await response.Content.ReadAsStreamAsync());
 		}
@@ -114,15 +103,15 @@ public class TreinpositiesPhotoSource : PhotoSource {
 				string photographerText = GetText(photographer);
 				
 				return new Photobox(
-					new Uri(m_Http.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
-					new Uri(m_Http.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
+					new Uri(m_Options.CurrentValue.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
+					new Uri(m_Options.CurrentValue.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
 					ownerString.Trim(),
 					GetText(vehicleType),
 					GetText(vehicleNumber),
 					type,
 					GetText(taken),
 					photographerText,
-					new Uri(m_Http.BaseAddress, Path.Combine("fotos", photographerText.Replace(' ', '_'))).ToString()
+					new Uri(m_Options.CurrentValue.BaseAddress, Path.Combine("fotos", photographerText.Replace(' ', '_'))).ToString()
 				);
 			};
 
@@ -138,7 +127,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 			Func<HtmlNode, Photobox> selector = GetPhotoboxSelector(type);
 			HtmlNodeCollection? nodes = html.DocumentNode.SelectNodes($"/html/body/div[@class='container']/a[@name='{headerTitle}']/following-sibling::div[1]/div");
 			if (nodes != null) {
-				photoboxes.AddRange(nodes.Select(selector).Where(photobox => !m_BlockedPhotographers.Contains(photobox.Photographer)));
+				photoboxes.AddRange(nodes.Select(selector).Where(photobox => !m_Options.CurrentValue.BlockedPhotographers.Contains(photobox.Photographer)));
 			}
 		}
 
@@ -165,5 +154,10 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		}
 
 		return ret;
+	}
+
+	public class Options {
+		public string[] BlockedPhotographers { get; set; } = Array.Empty<string>();
+		public Uri BaseAddress { get; set; } = new Uri("https://treinposities.nl/");
 	}
 }

@@ -1,35 +1,76 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
+using Foxite.Common;
 using Foxite.Common.Notifications;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TreinpositiesBot;
 
-var discord = new DiscordClient(new DiscordConfiguration() {
-	Token = Environment.GetEnvironmentVariable("BOT_TOKEN"),
-	Intents = DiscordIntents.GuildMessages | DiscordIntents.Guilds
-});
+var host = Host.CreateDefaultBuilder()
+	.ConfigureAppConfiguration((hbc, icb) => {
+		icb.AddJsonFile("appsettings.json");
+		icb.AddJsonFile($"appsettings.{hbc.HostingEnvironment.EnvironmentName}.json", true);
+		icb.AddEnvironmentVariables();
+		icb.AddCommandLine(args);
+	})
+	.ConfigureLogging((hbc, ilb) => {
+		//ilb.AddSimpleConsole();
+	})
+	.ConfigureServices((hbc, isc) => {
+		isc.Configure<CoreConfig>(hbc.Configuration.GetSection("Core"));
+		isc.Configure<TreinpositiesPhotoSource.Options>(hbc.Configuration.GetSection("Treinposities"));
 
+		isc.AddSingleton<Random>();
+		
+		isc.AddSingleton(isp => new DiscordClient(new DiscordConfiguration() {
+			Token = isp.GetRequiredService<IOptions<CoreConfig>>().Value.DiscordToken,
+			Intents = DiscordIntents.GuildMessages | DiscordIntents.Guilds,
+			LoggerFactory = isp.GetRequiredService<ILoggerFactory>(),
+		}));
+
+		isc.AddSingleton(_ => new HttpClientHandler() {
+			AllowAutoRedirect = false,
+		});
+
+		isc.AddSingleton(isp => {
+			var ret = new HttpClient(isp.GetRequiredService<HttpClientHandler>());
+
+			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.2"));
+			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
+
+			return ret;
+		});
+		
+		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
+	})
+	.Build();
+
+var logger = host.Services.GetRequiredService<ILogger<Program>>();
+var coreConfig = host.Services.GetRequiredService<IOptionsMonitor<CoreConfig>>();
+var discord = host.Services.GetRequiredService<DiscordClient>();
 discord.ClientErrored += (_, args) => {
-	Console.WriteLine(args.Exception.ToStringDemystified());
+	logger.LogError(args.Exception.Demystify(), "Discord client error");
 	return Task.CompletedTask;
 };
 
 DiscordWebhookLibNotificationSender? notifications = null;
-string? webhookUrl = Environment.GetEnvironmentVariable("WEBHOOK_URL");
-if (webhookUrl != null) {
+string? webhookUrl = coreConfig.CurrentValue.ErrorWebhookUrl;
+if (!string.IsNullOrWhiteSpace(webhookUrl)) {
 	notifications = new DiscordWebhookLibNotificationSender(new OptionsWrapper<DiscordWebhookLibNotificationSender.Config>(new DiscordWebhookLibNotificationSender.Config() {
 		WebhookUrl = webhookUrl
 	}));
 }
 
 var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
-string? cooldownEnvvar = Environment.GetEnvironmentVariable("COOLDOWN_SECONDS");
-TimeSpan cooldown = cooldownEnvvar == null ? TimeSpan.FromSeconds(60) : TimeSpan.FromSeconds(int.Parse(cooldownEnvvar));
-
-PhotoSource photoSource = new TreinpositiesPhotoSource();
+TimeSpan cooldown = TimeSpan.FromSeconds(coreConfig.CurrentValue.CooldownSeconds);
 
 discord.MessageCreated += (unused, args) => {
 	if (args.Guild != null) {
@@ -43,25 +84,39 @@ discord.MessageCreated += (unused, args) => {
 		return Task.CompletedTask;
 	}
 
-	IReadOnlyCollection<string> ids = photoSource.ExtractIds(args.Message.Content);
-	if (ids.Count > 0) {
+	var sources = host.Services.GetRequiredService<IEnumerable<PhotoSource>>();
+
+	PhotoSource? chosenSource = null;
+	IReadOnlyCollection<string> ids = Array.Empty<string>();
+
+	foreach (PhotoSource source in sources) {
+		ids = source.ExtractIds(args.Message.Content);
+		if (ids.Count > 0) {
+			chosenSource = source;
+			break;
+		}
+	}
+	
+	if (chosenSource != null) {
 		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > cooldown) {
 			_ = Task.Run(async () => {
 				Photobox? photobox = null;
 				try {
-					photobox = await photoSource.GetPhoto(ids);
+					photobox = await chosenSource.GetPhoto(ids);
 					if (photobox == null) {
-						string? noPhotosReactionEnvvar = Environment.GetEnvironmentVariable("NO_RESULTS_EMOTE");
-						if (noPhotosReactionEnvvar != null) {
+						if (coreConfig.CurrentValue.NoResultsEmote != null) {
 							try {
-								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, noPhotosReactionEnvvar, true));
+								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
 							} catch (UnauthorizedException) {
+								// User blocked bot
+								return;
 							}
 						}
 					} else {
 						try {
 							await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
 						} catch (UnauthorizedException) {
+							// User blocked bot
 							return;
 						}
 
@@ -84,12 +139,13 @@ discord.MessageCreated += (unused, args) => {
 							)
 						);
 					}
-				} catch (Exception e) {
-					string report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${(photobox?.PageUrl ?? "null")}";
-					Console.WriteLine(report);
-					Console.WriteLine(e.ToStringDemystified());
+				} catch (Exception ex) {
+					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${(photobox?.PageUrl ?? "null")}";
+					
+					logger.LogCritical(ex, report);
+					
 					if (notifications != null) {
-						await notifications.SendNotificationAsync(report, e.Demystify());
+						await notifications.SendNotificationAsync(report.ToString(), ex.Demystify());
 					}
 				}
 			});
