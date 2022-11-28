@@ -8,7 +8,8 @@ public record Photobox(
 	string VehicleNumber,
 	PhotoType PhotoType,
 	string Taken,
-	string Photographer
+	string Photographer,
+	string PhotographerUrl
 ) {
 	public string Identity {
 		get {
