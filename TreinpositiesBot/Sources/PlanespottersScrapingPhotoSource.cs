@@ -35,7 +35,7 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 			HtmlDocument document;
 			var request = new HttpRequestMessage() {
 				Method = HttpMethod.Get,
-				RequestUri = new Uri(m_BaseUrl, $"/search?q={Uri.EscapeDataString(reg)}"),
+				RequestUri = new Uri(m_BaseUrl, $"/photos/reg/{Uri.EscapeDataString(reg)}"),
 				Content = new StringContent("") {
 					Headers = {
 						{ "X-Requested-With", "XMLHttpRequest" },
