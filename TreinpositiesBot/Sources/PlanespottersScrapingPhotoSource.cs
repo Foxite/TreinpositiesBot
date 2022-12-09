@@ -43,7 +43,7 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 				}
 			};
 			
-			request.Headers.Referrer = new Uri("https://www.planespotters.net/search?q=PH-BKL");
+			request.Headers.Referrer = new Uri("https://www.planespotters.net/photos");
 			
 			using (HttpResponseMessage response = await http.SendAsync(request)) {
 				document = new HtmlDocument();
