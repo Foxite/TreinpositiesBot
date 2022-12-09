@@ -51,6 +51,8 @@ var host = Host.CreateDefaultBuilder()
 		
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
+
+		isc.AddSingleton<PhotoSourceProvider>();
 	})
 	.Build();
 
@@ -85,8 +87,7 @@ discord.MessageCreated += (unused, args) => {
 		return Task.CompletedTask;
 	}
 
-	var sources = host.Services.GetRequiredService<IEnumerable<PhotoSource>>().ToList();
-	sources.Shuffle();
+	var sources = host.Services.GetRequiredService<PhotoSourceProvider>().GetPhotoSources(args.Channel);
 
 	PhotoSource? chosenSource = null;
 	IReadOnlyCollection<string> ids = Array.Empty<string>();

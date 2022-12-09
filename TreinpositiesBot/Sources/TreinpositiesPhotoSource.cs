@@ -15,13 +15,15 @@ public class TreinpositiesPhotoSource : PhotoSource {
 	private readonly ILogger<TreinpositiesPhotoSource> m_Logger;
 	private readonly Random m_Random;
 
+	public override string Name => "Treinposities";
+
 	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger, Random random) {
 		m_Options = options;
 		m_Http = http;
 		m_Logger = logger;
 		m_Random = random;
 	}
-	
+
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
 		MatchCollection matches = TrainNumberRegex.Matches(message);
 		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();

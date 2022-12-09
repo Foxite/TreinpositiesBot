@@ -11,11 +11,13 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 	private readonly Uri m_BaseUrl;
 	private readonly Random m_Random;
 
+	public override string Name => "Planespotters";
+
 	public PlanespottersScrapingPhotoSource(Random random) {
 		m_Random = random;
 		m_BaseUrl = new Uri("https://www.planespotters.net/");
 	}
-	
+
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
 		MatchCollection matches = PlaneRegistrationRegex.Matches(message);
 		return matches.Select(match => match.Value).Distinct().ToArray();
