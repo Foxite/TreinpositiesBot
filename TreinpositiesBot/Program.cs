@@ -85,7 +85,8 @@ discord.MessageCreated += (unused, args) => {
 		return Task.CompletedTask;
 	}
 
-	var sources = host.Services.GetRequiredService<IEnumerable<PhotoSource>>();
+	var sources = host.Services.GetRequiredService<IEnumerable<PhotoSource>>().ToList();
+	sources.Shuffle();
 
 	PhotoSource? chosenSource = null;
 	IReadOnlyCollection<string> ids = Array.Empty<string>();
