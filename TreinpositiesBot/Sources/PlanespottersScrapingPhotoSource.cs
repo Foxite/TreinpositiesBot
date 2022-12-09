@@ -24,6 +24,8 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 	}
 	
 	public async override Task<Photobox?> GetPhoto(IReadOnlyCollection<string> ids) {
+		// Can't reuse this one, unless we find a way to reset its cookies.
+		// Making a request to PS causes a cookie to be set, which causes further calls to this function to fail.
 		using var http = new HttpClient();
 		http.DefaultRequestHeaders.UserAgent.Add(ProductInfoHeaderValue.Parse("Mozilla/5.0"));
 		http.DefaultRequestHeaders.UserAgent.Add(ProductInfoHeaderValue.Parse("(X11; Linux x86_64; rv:107.0)"));
