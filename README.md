@@ -10,7 +10,7 @@ If you block the bot, it won't reply to your messages.
 ## Docker deployment
 Dockerfile in TreinpositiesBot folder, no additional dependencies.
 
-Configuration is present in `/app/appsettings.json`. You may either mount your own file, or [use envvars to override items in the configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#environment-variable-configuration-provider). Example:
+Configuration is present in [`/app/appsettings.json`](TreinpositiesBot/appsettings.json). You may either mount your own file, or [use envvars to override items in the configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#environment-variable-configuration-provider). Example:
 - Core__DiscordToken
 - Treinposities__BlockedPhotographers__0
 - Core__SourcesByGuild__805008823081107467__0
