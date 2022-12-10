@@ -3,6 +3,8 @@ Whenever someone says 3 or more digits, this bot will post a random image of a v
 
 It ignores numbers inside urls, mentions, and words, and understands spaces within the numbers.
 
+It also supports Planespotters.
+
 If you block the bot, it won't reply to your messages.
 
 ## Docker deployment
