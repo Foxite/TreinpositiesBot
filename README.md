@@ -7,11 +7,10 @@ If you block the bot, it won't reply to your messages.
 
 ## Docker deployment
 Dockerfile in TreinpositiesBot folder, no additional dependencies.
-Envvars (optional unless stated):
-- BOT_TOKEN (required)
-- BLOCKED_PHOTOGRAPHERS (semicolon separated list of usernames whose photos should never be posted)
-- WEBHOOK_URL (error reports are sent here)
-- COOLDOWN_SECONDS (default: 60)
-- NO_RESULTS_EMOTE (reaction added if there are no photos)
+
+Configuration is present in `/app/appsettings.json`. You may either mount your own file, or [use envvars to override items in the configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#environment-variable-configuration-provider). Example:
+- Core__DiscordToken
+- Treinposities__BlockedPhotographers__0
+- Core__SourcesByGuild__805008823081107467__0
 
 Consider restricting the bot to specific channels because my users *love* spamming this thing.
