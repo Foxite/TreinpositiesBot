@@ -49,6 +49,8 @@ var host = Host.CreateDefaultBuilder()
 			return ret;
 		});
 		
+		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinBusPositiesPhotoSource>());
+		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, BuspositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
 

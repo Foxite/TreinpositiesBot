@@ -7,36 +7,75 @@ using Microsoft.Extensions.Options;
 
 namespace TreinpositiesBot;
 
-public class TreinpositiesPhotoSource : PhotoSource {
-	private static readonly Regex TrainNumberRegex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
-	
-	private readonly IOptionsMonitor<Options> m_Options;
-	private readonly HttpClient m_Http;
-	private readonly ILogger<TreinpositiesPhotoSource> m_Logger;
-	private readonly Random m_Random;
-
+public class TreinpositiesPhotoSource : TreinBusPositiesPhotoSource {
 	public override string Name => "Treinposities";
 
-	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger, Random random) {
+	protected override Sources GetSources => Sources.Treinposities;
+	
+	public TreinpositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinpositiesPhotoSource> logger, Random random) : base(options, http, logger, random) { }
+}
+
+public class BuspositiesPhotoSource : TreinBusPositiesPhotoSource {
+	public override string Name => "Busposities";
+
+	protected override Sources GetSources => Sources.Busposities;
+	
+	public BuspositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<BuspositiesPhotoSource> logger, Random random) : base(options, http, logger, random) { }
+}
+
+public class TreinBusPositiesPhotoSource : PhotoSource {
+	private static readonly Regex TrainRegex = new Regex(@"(?:^|\s)(?<number>(?: *\d *){3,})(?:$|\s)");
+	private static readonly Regex BusRegex = new Regex(@"(?:^|\s)bus ?([a-z]{2,3})? ?(?<number>\d{3,})(?:$|\s)", RegexOptions.IgnoreCase);
+	private static readonly Uri Treinposities = new Uri("https://treinposities.nl/");
+	private static readonly Uri Busposities = new Uri("https://busposities.nl/");
+
+	private readonly IOptionsMonitor<Options> m_Options;
+	private readonly HttpClient m_Http;
+	private readonly ILogger<TreinBusPositiesPhotoSource> m_Logger;
+	private readonly Random m_Random;
+
+	public override string Name => "Trein/Busposities";
+
+	protected virtual Sources GetSources => Sources.Busposities | Sources.Treinposities;
+
+	public TreinBusPositiesPhotoSource(IOptionsMonitor<Options> options, HttpClient http, ILogger<TreinBusPositiesPhotoSource> logger, Random random) {
 		m_Options = options;
 		m_Http = http;
 		m_Logger = logger;
 		m_Random = random;
 	}
 
+	private Uri GetBaseUri(string source) => source switch {
+		"bus" => Busposities,
+		"train" => Treinposities
+	};
+
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
-		MatchCollection matches = TrainNumberRegex.Matches(message);
-		return matches.Select(match => match.Groups["number"].Value.Trim()).Distinct().ToArray();
+		IEnumerable<string> matches = Enumerable.Empty<string>();
+
+		if ((GetSources & Sources.Busposities) != 0) {
+			matches = matches.Concat(BusRegex.Matches(message).Select(match => "bus:" + match.Groups["number"].Value.Trim()).Distinct());
+		}
+
+		if ((GetSources & Sources.Treinposities) != 0) {
+			matches = matches.Concat(TrainRegex.Matches(message).Select(match => "train:" + match.Groups["number"].Value.Trim()).Distinct());
+		}
+
+		return matches.ToArray();
 	}
 
 	public async override Task<Photobox?> GetPhoto(IReadOnlyCollection<string> ids) {
-		foreach (string number in ids) {
+		foreach (string id in ids) {
+			int colonPosition = id.IndexOf(':');
+			string number = id[(colonPosition + 1)..];
+			string source = id[..colonPosition];
+			
 			string targetUri = $"?q={Uri.EscapeDataString(number)}&q2=";
 			List<Photobox>? photoboxes = null;
 
-			using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(m_Options.CurrentValue.BaseAddress, targetUri), HttpCompletionOption.ResponseHeadersRead)) {
+			using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), targetUri), HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
-					photoboxes = await GetPhotoboxesForVehicle(response.Headers.Location!);
+					photoboxes = await GetPhotoboxesForVehicle(source, response.Headers.Location!);
 				} else if (response.StatusCode == HttpStatusCode.OK) {
 					var html = new HtmlDocument();
 					html.Load(await response.Content.ReadAsStreamAsync());
@@ -56,7 +95,7 @@ public class TreinpositiesPhotoSource : PhotoSource {
 						candidates.Shuffle();
 						foreach (HtmlNode candidate in candidates.Take(5)) {
 							string candidatePhotosUrl = candidate.GetAttributeValue("href", null);
-							photoboxes = await GetPhotoboxesForVehicle(new Uri(m_Options.CurrentValue.BaseAddress, candidatePhotosUrl));
+							photoboxes = await GetPhotoboxesForVehicle(source, new Uri(candidatePhotosUrl));
 							if (photoboxes != null) {
 								break;
 							}
@@ -78,9 +117,9 @@ public class TreinpositiesPhotoSource : PhotoSource {
 		return null;
 	}
 
-	async Task<List<Photobox>?> GetPhotoboxesForVehicle(Uri vehicleUri) {
+	async Task<List<Photobox>?> GetPhotoboxesForVehicle(string source, Uri vehicleUri) {
 		var html = new HtmlDocument();
-		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(m_Options.CurrentValue.BaseAddress, Path.Combine(vehicleUri.ToString(), "foto")))) {
+		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), Path.Combine(vehicleUri.AbsolutePath, "foto")))) {
 			response.EnsureSuccessStatusCode();
 			html.Load(await response.Content.ReadAsStreamAsync());
 		}
@@ -105,15 +144,15 @@ public class TreinpositiesPhotoSource : PhotoSource {
 				string photographerText = Util.GetText(photographer);
 				
 				return new Photobox(
-					new Uri(m_Options.CurrentValue.BaseAddress, pageUrl.GetAttributeValue("href", null)).ToString(),
-					new Uri(m_Options.CurrentValue.BaseAddress, imageUrl.GetAttributeValue("src", null)).ToString(),
+					new Uri(GetBaseUri(source), pageUrl.GetAttributeValue("href", null)).ToString(),
+					new Uri(GetBaseUri(source), imageUrl.GetAttributeValue("src", null)).ToString(),
 					ownerString.Trim(),
 					Util.GetText(vehicleType),
 					Util.GetText(vehicleNumber),
 					type,
 					Util.GetText(taken),
 					photographerText,
-					new Uri(m_Options.CurrentValue.BaseAddress, Path.Combine("fotos", photographerText.Replace(' ', '_'))).ToString()
+					new Uri(GetBaseUri(source), Path.Combine("fotos", photographerText.Replace(' ', '_'))).ToString()
 				);
 			};
 
@@ -142,6 +181,11 @@ public class TreinpositiesPhotoSource : PhotoSource {
 
 	public class Options {
 		public string[] BlockedPhotographers { get; set; } = Array.Empty<string>();
-		public Uri BaseAddress { get; set; } = new Uri("https://treinposities.nl/");
+	}
+
+	[Flags]
+	protected enum Sources {
+		Treinposities = 1,
+		Busposities = 2,
 	}
 }
