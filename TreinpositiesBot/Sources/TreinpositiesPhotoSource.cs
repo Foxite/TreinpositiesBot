@@ -119,7 +119,7 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 
 	async Task<List<Photobox>?> GetPhotoboxesForVehicle(string source, Uri vehicleUri) {
 		var html = new HtmlDocument();
-		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), Path.Combine(vehicleUri.AbsolutePath, "foto")))) {
+		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), Path.Combine(vehicleUri.IsAbsoluteUri ? vehicleUri.AbsolutePath : vehicleUri.ToString(), "foto")))) {
 			response.EnsureSuccessStatusCode();
 			html.Load(await response.Content.ReadAsStreamAsync());
 		}
