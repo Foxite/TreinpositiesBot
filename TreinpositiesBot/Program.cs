@@ -54,7 +54,7 @@ var host = Host.CreateDefaultBuilder()
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
 
-		isc.AddSingleton<PhotoSourceProvider>();
+		isc.AddSingleton<PhotoSourceService>();
 	})
 	.Build();
 
@@ -89,24 +89,25 @@ discord.MessageCreated += (unused, args) => {
 		return Task.CompletedTask;
 	}
 
-	var sources = host.Services.GetRequiredService<PhotoSourceProvider>().GetPhotoSources(args.Channel);
+	_ = Task.Run(async () => {
+		try {
+			await using var scope = host.Services.CreateAsyncScope();
+			var sources = await scope.ServiceProvider.GetRequiredService<PhotoSourceService>().GetPhotoSourcesAsync(args.Channel);
 
-	PhotoSource? chosenSource = null;
-	IReadOnlyCollection<string> ids = Array.Empty<string>();
+			PhotoSource? chosenSource = null;
+			IReadOnlyCollection<string> ids = Array.Empty<string>();
 
-	foreach (PhotoSource source in sources) {
-		ids = source.ExtractIds(args.Message.Content);
-		if (ids.Count > 0) {
-			chosenSource = source;
-			break;
-		}
-	}
-	
-	if (chosenSource != null) {
-		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
-			_ = Task.Run(async () => {
-				Photobox? photobox = null;
-				try {
+			foreach (PhotoSource source in sources) {
+				ids = source.ExtractIds(args.Message.Content);
+				if (ids.Count > 0) {
+					chosenSource = source;
+					break;
+				}
+			}
+			
+			if (chosenSource != null) {
+				if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
+					Photobox? photobox = null;
 					photobox = await chosenSource.GetPhoto(ids);
 					if (photobox == null) {
 						if (coreConfig.CurrentValue.NoResultsEmote != null) {
@@ -144,22 +145,22 @@ discord.MessageCreated += (unused, args) => {
 							)
 						);
 					}
-				} catch (Exception ex) {
-					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
-					
-					logger.LogCritical(ex, report);
-					
-					if (notifications != null) {
-						await notifications.SendNotificationAsync(report.ToString(), ex.Demystify());
-					}
+				} else {
+					try {
+						await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+					} catch (UnauthorizedException) { }
 				}
-			});
-		} else {
-			try {
-				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-			} catch (UnauthorizedException) { }
+			}
+		} catch (Exception ex) {
+			FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink})";
+					
+			logger.LogCritical(ex, report);
+					
+			if (notifications != null) {
+				await notifications.SendNotificationAsync(report.ToString(), ex.Demystify());
+			}
 		}
-	}
+	});
 
 	return Task.CompletedTask;
 };
