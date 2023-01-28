@@ -120,6 +120,9 @@ discord.MessageCreated += (unused, args) => {
 					} else {
 						try {
 							await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+						} catch (NotFoundException) {
+							// Message was deleted
+							return;
 						} catch (UnauthorizedException) {
 							// User blocked bot
 							return;
@@ -134,15 +137,20 @@ discord.MessageCreated += (unused, args) => {
 						};
 
 						lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
-						await args.Message.RespondAsync(dmb => dmb
-							.WithEmbed(new DiscordEmbedBuilder()
-								.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
-								.WithTitle($"{typeName} van {photobox.Identity}")
-								.WithUrl(photobox.PageUrl)
-								.WithImageUrl(photobox.ImageUrl)
-								.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
-							)
-						);
+						try {
+							await args.Message.RespondAsync(dmb => dmb
+								.WithEmbed(new DiscordEmbedBuilder()
+									.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
+									.WithTitle($"{typeName} van {photobox.Identity}")
+									.WithUrl(photobox.PageUrl)
+									.WithImageUrl(photobox.ImageUrl)
+									.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
+								)
+							);
+						} catch (NotFoundException) {
+							// Message was deleted
+							return;
+						}
 					}
 				} catch (Exception ex) {
 					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
