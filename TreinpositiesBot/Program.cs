@@ -109,7 +109,8 @@ discord.MessageCreated += (unused, args) => {
 				try {
 					photobox = await chosenSource.GetPhoto(ids);
 					if (photobox == null) {
-						if (coreConfig.CurrentValue.NoResultsEmote != null) {
+						logger.LogInformation("No matches found for " + string.Join(", ", ids));
+						if (!string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
 							try {
 								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
 							} catch (UnauthorizedException) {
