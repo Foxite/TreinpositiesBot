@@ -113,6 +113,9 @@ discord.MessageCreated += (unused, args) => {
 						if (!string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
 							try {
 								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
+							} catch (NotFoundException) {
+								// Message was deleted
+								return;
 							} catch (UnauthorizedException) {
 								// User blocked bot
 								return;
@@ -166,7 +169,13 @@ discord.MessageCreated += (unused, args) => {
 		} else {
 			try {
 				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-			} catch (UnauthorizedException) { }
+			} catch (NotFoundException) {
+				// Message was deleted
+				return Task.CompletedTask;
+			} catch (UnauthorizedException) {
+				// User blocked bot
+				return Task.CompletedTask;
+			}
 		}
 	}
 
