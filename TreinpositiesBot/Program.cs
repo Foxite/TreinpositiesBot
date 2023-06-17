@@ -26,7 +26,9 @@ var host = Host.CreateDefaultBuilder()
 	})
 	.ConfigureServices((hbc, isc) => {
 		isc.Configure<CoreConfig>(hbc.Configuration.GetSection("Core"));
-		isc.Configure<SourcesConfig>(hbc.Configuration.GetSection("Sources"));
+		var sourcesConfig = hbc.Configuration.GetSection("Sources");
+		var boundSourcesConfig = sourcesConfig.Get<SourcesConfig>()!;
+		isc.Configure<SourcesConfig>(sourcesConfig);
 		isc.Configure<TreinpositiesPhotoSource.Options>(hbc.Configuration.GetSection("Treinposities"));
 
 		isc.AddSingleton<Random>();
@@ -55,7 +57,12 @@ var host = Host.CreateDefaultBuilder()
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
 
-		isc.AddSingleton<PhotoSourceService>();
+		isc.AddScoped<PhotoSourceService>();
+
+		isc.Add(new ServiceDescriptor(typeof(PhotoSourceProvider), boundSourcesConfig.Source switch {
+			SourcesConfigSource.Config => typeof(ConfigPhotoSourceProvider),
+			SourcesConfigSource.Postgres => typeof(PostgresPhotoSourceProvider),
+		}, ServiceLifetime.Scoped));
 	})
 	.Build();
 
