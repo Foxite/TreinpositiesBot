@@ -44,7 +44,7 @@ public class ConfigPhotoSourceProvider : PhotoSourceProvider {
 
 	public override Task<List<string>?> GetSourceNamesForChannelAsync(ulong guildId, ulong channelId) {
 		if (m_Sources.CurrentValue.SourcesByGuild == null) {
-			var ret = Task.FromResult<>(null);
+			var ret = Task.FromResult<List<string>?>(null);
 			return ret;
 		} else {
 			m_Sources.CurrentValue.SourcesByGuild.TryGetValue(guildId, out List<string>? sourceNames);

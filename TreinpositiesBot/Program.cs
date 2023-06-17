@@ -26,6 +26,7 @@ var host = Host.CreateDefaultBuilder()
 	})
 	.ConfigureServices((hbc, isc) => {
 		isc.Configure<CoreConfig>(hbc.Configuration.GetSection("Core"));
+		isc.Configure<SourcesConfig>(hbc.Configuration.GetSection("Sources"));
 		isc.Configure<TreinpositiesPhotoSource.Options>(hbc.Configuration.GetSection("Treinposities"));
 
 		isc.AddSingleton<Random>();
@@ -43,7 +44,7 @@ var host = Host.CreateDefaultBuilder()
 		isc.AddSingleton(isp => {
 			var ret = new HttpClient(isp.GetRequiredService<HttpClientHandler>());
 
-			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.3"));
+			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.4"));
 			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
 
 			return ret;
@@ -110,9 +111,13 @@ discord.MessageCreated += (unused, args) => {
 					Photobox? photobox = null;
 					photobox = await chosenSource.GetPhoto(ids);
 					if (photobox == null) {
-						if (coreConfig.CurrentValue.NoResultsEmote != null) {
+						logger.LogInformation("No matches found for " + string.Join(", ", ids));
+						if (!string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
 							try {
 								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
+							} catch (NotFoundException) {
+								// Message was deleted
+								return;
 							} catch (UnauthorizedException) {
 								// User blocked bot
 								return;
@@ -121,6 +126,9 @@ discord.MessageCreated += (unused, args) => {
 					} else {
 						try {
 							await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+						} catch (NotFoundException) {
+							// Message was deleted
+							return;
 						} catch (UnauthorizedException) {
 							// User blocked bot
 							return;
@@ -135,19 +143,25 @@ discord.MessageCreated += (unused, args) => {
 						};
 
 						lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
-						await args.Message.RespondAsync(dmb => dmb
-							.WithEmbed(new DiscordEmbedBuilder()
-								.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
-								.WithTitle($"{typeName} van {photobox.Identity}")
-								.WithUrl(photobox.PageUrl)
-								.WithImageUrl(photobox.ImageUrl)
-								.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
-							)
-						);
+						try {
+							await args.Message.RespondAsync(dmb => dmb
+								.WithEmbed(new DiscordEmbedBuilder()
+									.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
+									.WithTitle($"{typeName} van {photobox.Identity}")
+									.WithUrl(photobox.PageUrl)
+									.WithImageUrl(photobox.ImageUrl)
+									.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
+								)
+							);
+						} catch (NotFoundException) {
+							// Message was deleted
+							return;
+						}
 					}
 				} else {
 					try {
 						await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+					} catch (NotFoundException) {
 					} catch (UnauthorizedException) { }
 				}
 			}

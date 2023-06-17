@@ -6,7 +6,7 @@ using Foxite.Common;
 namespace TreinpositiesBot; 
 
 public class PlanespottersScrapingPhotoSource : PhotoSource {
-	private static readonly Regex PlaneRegistrationRegex = new Regex(@"^[A-Z0-9]{1,3}-[A-Z0-9]{2,7}$");
+	private static readonly Regex PlaneRegistrationRegex = new Regex(@"^[A-Z0-9]{1,3}-?[A-Z0-9]{2,7}$");
 	
 	private readonly Uri m_BaseUrl;
 	private readonly Random m_Random;
