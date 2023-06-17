@@ -61,7 +61,7 @@ var host = Host.CreateDefaultBuilder()
 
 		isc.Add(new ServiceDescriptor(typeof(PhotoSourceProvider), boundSourcesConfig.Source switch {
 			SourcesConfigSource.Config => typeof(ConfigPhotoSourceProvider),
-			SourcesConfigSource.Postgres => typeof(PostgresPhotoSourceProvider),
+			SourcesConfigSource.Postgres => typeof(DatabasePhotoSourceProvider),
 		}, ServiceLifetime.Scoped));
 	})
 	.Build();
@@ -118,7 +118,7 @@ discord.MessageCreated += (unused, args) => {
 				return;
 			}
 
-			if (lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
+			if (lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) && DateTime.UtcNow - lastSend < coreConfig.CurrentValue.Cooldown) {
 				try {
 					await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
 				} catch (NotFoundException) {
