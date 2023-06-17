@@ -21,13 +21,8 @@ public class PhotoSourceService {
 				ret = m_Sources.Where(source => sourceNames.Contains(source.Name)).ToList();
 			}
 		}
-		
-		if (ret == null) {
-			ret = m_Sources.ToList();
-			ret.Shuffle();
-		}
 
-		return ret;
+		return ret ?? m_Sources.ToList();
 	}
 }
 

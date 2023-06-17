@@ -100,7 +100,8 @@ discord.MessageCreated += (unused, args) => {
 	_ = Task.Run(async () => {
 		try {
 			await using var scope = host.Services.CreateAsyncScope();
-			var sources = await scope.ServiceProvider.GetRequiredService<PhotoSourceService>().GetPhotoSourcesAsync(args.Channel);
+			List<PhotoSource> sources = await scope.ServiceProvider.GetRequiredService<PhotoSourceService>().GetPhotoSourcesAsync(args.Channel);
+			sources.Shuffle();
 
 			PhotoSource? chosenSource = null;
 			IReadOnlyCollection<string> ids = Array.Empty<string>();
@@ -113,64 +114,69 @@ discord.MessageCreated += (unused, args) => {
 				}
 			}
 			
-			if (chosenSource != null) {
-				if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
-					Photobox? photobox = null;
-					photobox = await chosenSource.GetPhoto(ids);
-					if (photobox == null) {
-						logger.LogInformation("No matches found for " + string.Join(", ", ids));
-						if (!string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
-							try {
-								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
-							} catch (NotFoundException) {
-								// Message was deleted
-								return;
-							} catch (UnauthorizedException) {
-								// User blocked bot
-								return;
-							}
-						}
-					} else {
-						try {
-							await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
-						} catch (NotFoundException) {
-							// Message was deleted
-							return;
-						} catch (UnauthorizedException) {
-							// User blocked bot
-							return;
-						}
+			if (chosenSource == null) {
+				return;
+			}
 
-						string typeName = photobox.PhotoType switch {
-							PhotoType.General => "Foto",
-							PhotoType.Interior => "Interieurfoto",
-							PhotoType.Detail => "Detailfoto",
-							PhotoType.Cabin => "Cabinefoto",
-							PhotoType.EngineRoom => "Motorruimtefoto"
-						};
-
-						lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
-						try {
-							await args.Message.RespondAsync(dmb => dmb
-								.WithEmbed(new DiscordEmbedBuilder()
-									.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
-									.WithTitle($"{typeName} van {photobox.Identity}")
-									.WithUrl(photobox.PageUrl)
-									.WithImageUrl(photobox.ImageUrl)
-									.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
-								)
-							);
-						} catch (NotFoundException) {
-							// Message was deleted
-							return;
-						}
-					}
-				} else {
-					try {
-						await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-					} catch (NotFoundException) {
-					} catch (UnauthorizedException) { }
+			if (lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
+				try {
+					await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+				} catch (NotFoundException) {
+				} catch (UnauthorizedException) {
 				}
+				return;
+			}
+			
+			Photobox? photobox = await chosenSource.GetPhoto(ids);
+			if (photobox == null) {
+				logger.LogInformation("No matches found for {Ids}", string.Join(", ", ids));
+				
+				if (string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
+					return;
+				}
+				
+				try {
+					await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
+				} catch (NotFoundException) {
+				} catch (UnauthorizedException) {
+				}
+				return;
+			}
+			
+			// This reaction is to test if the user has blocked the bot.
+			// If they have, then we don't reply.
+			try {
+				await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+			} catch (NotFoundException) {
+				// Message was deleted
+				return;
+			} catch (UnauthorizedException) {
+				// User blocked bot - don't reply
+				return;
+			}
+			
+			// User did not block bot
+
+			string typeName = photobox.PhotoType switch {
+				PhotoType.General => "Foto",
+				PhotoType.Interior => "Interieurfoto",
+				PhotoType.Detail => "Detailfoto",
+				PhotoType.Cabin => "Cabinefoto",
+				PhotoType.EngineRoom => "Motorruimtefoto"
+			};
+
+			lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
+			try {
+				await args.Message.RespondAsync(dmb => dmb
+					.WithEmbed(new DiscordEmbedBuilder()
+						.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
+						.WithTitle($"{typeName} van {photobox.Identity}")
+						.WithUrl(photobox.PageUrl)
+						.WithImageUrl(photobox.ImageUrl)
+						.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
+					)
+				);
+			} catch (NotFoundException) {
 			}
 		} catch (Exception ex) {
 			FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink})";
