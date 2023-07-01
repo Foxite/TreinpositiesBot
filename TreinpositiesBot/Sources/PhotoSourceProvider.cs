@@ -14,9 +14,13 @@ public class PhotoSourceProvider {
 
 	public List<PhotoSource> GetPhotoSources(DiscordChannel channel) {
 		List<PhotoSource> ret;
-		if (channel.GuildId.HasValue && m_Config.CurrentValue.SourcesByGuild != null && m_Config.CurrentValue.SourcesByGuild.TryGetValue(channel.GuildId.Value, out List<string>? sourceNames)) {
-			ret = m_Sources.Where(source => sourceNames.Contains(source.Name)).ToList();
-			return ret;
+		if (channel.GuildId.HasValue) {
+			List<string>? guildSources = m_Config.CurrentValue.GetSources(channel.GuildId, channel.Id);
+			if (guildSources != null) {
+				ret = m_Sources.Where(source => guildSources.Contains(source.Name)).ToList();
+			} else {
+				ret = m_Sources.ToList();
+			}
 		} else {
 			ret = m_Sources.ToList();
 		}

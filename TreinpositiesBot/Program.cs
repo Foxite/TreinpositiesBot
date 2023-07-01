@@ -94,6 +94,8 @@ discord.MessageCreated += (unused, args) => {
 	PhotoSource? chosenSource = null;
 	IReadOnlyCollection<string> ids = Array.Empty<string>();
 
+	int cooldownSeconds = coreConfig.CurrentValue.CooldownSeconds;
+
 	foreach (PhotoSource source in sources) {
 		ids = source.ExtractIds(args.Message.Content);
 		if (ids.Count > 0) {
@@ -103,7 +105,7 @@ discord.MessageCreated += (unused, args) => {
 	}
 	
 	if (chosenSource != null) {
-		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.Cooldown) {
+		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.GetCooldown(args.Channel.GuildId, args.Channel.Id)) {
 			_ = Task.Run(async () => {
 				Photobox? photobox = null;
 				try {
