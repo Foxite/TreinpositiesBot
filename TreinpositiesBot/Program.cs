@@ -43,7 +43,7 @@ var host = Host.CreateDefaultBuilder()
 		isc.AddSingleton(isp => {
 			var ret = new HttpClient(isp.GetRequiredService<HttpClientHandler>());
 
-			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.3"));
+			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TreinpositiesBot", "0.4"));
 			ret.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(https://github.com/Foxite/TreinpositiesBot)"));
 
 			return ret;
@@ -55,6 +55,8 @@ var host = Host.CreateDefaultBuilder()
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
 
 		isc.AddSingleton<PhotoSourceProvider>();
+
+		isc.AddSingleton<ChannelConfigService, ConfigChannelConfigService>();
 	})
 	.Build();
 
@@ -77,24 +79,23 @@ discord.ClientErrored += (_, args) => {
 	return Task.CompletedTask;
 };
 
-discord.MessageCreated += (unused, args) => {
+discord.MessageCreated += async (unused, args) => {
 	if (args.Guild != null) {
 		Permissions perms = args.Channel.PermissionsFor(args.Guild.CurrentMember);
 		if (!perms.HasFlag(args.Channel.IsThread ? Permissions.SendMessagesInThreads : Permissions.SendMessages)) {
-			return Task.CompletedTask;
+			return;
 		}
 	}
 
 	if (args.Author.IsBot) {
-		return Task.CompletedTask;
+		return;
 	}
 
-	var sources = host.Services.GetRequiredService<PhotoSourceProvider>().GetPhotoSources(args.Channel);
+	var ccs = host.Services.GetRequiredService<ChannelConfigService>();
+	var sources = await host.Services.GetRequiredService<PhotoSourceProvider>().GetPhotoSources(args.Channel);
 
 	PhotoSource? chosenSource = null;
 	IReadOnlyCollection<string> ids = Array.Empty<string>();
-
-	int cooldownSeconds = coreConfig.CurrentValue.CooldownSeconds;
 
 	foreach (PhotoSource source in sources) {
 		ids = source.ExtractIds(args.Message.Content);
@@ -103,85 +104,82 @@ discord.MessageCreated += (unused, args) => {
 			break;
 		}
 	}
+
+	if (chosenSource == null) {
+		return;
+	}
 	
-	if (chosenSource != null) {
-		if (!lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) || DateTime.UtcNow - lastSend > coreConfig.CurrentValue.GetCooldown(args.Channel.GuildId, args.Channel.Id)) {
-			_ = Task.Run(async () => {
-				Photobox? photobox = null;
-				try {
-					photobox = await chosenSource.GetPhoto(ids);
-					if (photobox == null) {
-						logger.LogInformation("No matches found for " + string.Join(", ", ids));
-						if (!string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
-							try {
-								await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
-							} catch (NotFoundException) {
-								// Message was deleted
-								return;
-							} catch (UnauthorizedException) {
-								// User blocked bot
-								return;
-							}
-						}
-					} else {
-						try {
-							await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
-						} catch (NotFoundException) {
-							// Message was deleted
-							return;
-						} catch (UnauthorizedException) {
-							// User blocked bot
-							return;
-						}
-
-						string typeName = photobox.PhotoType switch {
-							PhotoType.General => "Foto",
-							PhotoType.Interior => "Interieurfoto",
-							PhotoType.Detail => "Detailfoto",
-							PhotoType.Cabin => "Cabinefoto",
-							PhotoType.EngineRoom => "Motorruimtefoto"
-						};
-
-						lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
-						try {
-							await args.Message.RespondAsync(dmb => dmb
-								.WithEmbed(new DiscordEmbedBuilder()
-									.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
-									.WithTitle($"{typeName} van {photobox.Identity}")
-									.WithUrl(photobox.PageUrl)
-									.WithImageUrl(photobox.ImageUrl)
-									.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
-								)
-							);
-						} catch (NotFoundException) {
-							// Message was deleted
-							return;
-						}
-					}
-				} catch (Exception ex) {
-					FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
-					
-					logger.LogCritical(ex, report);
-					
-					if (notifications != null) {
-						await notifications.SendNotificationAsync(report.ToString(), ex.Demystify());
-					}
-				}
-			});
-		} else {
-			try {
-				return args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
-			} catch (NotFoundException) {
-				// Message was deleted
-				return Task.CompletedTask;
-			} catch (UnauthorizedException) {
-				// User blocked bot
-				return Task.CompletedTask;
-			}
+	if (lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) && DateTime.UtcNow - lastSend <= await ccs.GetCooldownAsync(args.Channel)) {
+		try {
+			await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
+		} catch (NotFoundException) {
+			// Message was deleted
+		} catch (UnauthorizedException) {
+			// User blocked bot
 		}
+		return;
 	}
 
-	return Task.CompletedTask;
+	_ = Task.Run(async () => {
+		Photobox? photobox = null;
+		try {
+			photobox = await chosenSource.GetPhoto(ids);
+			if (photobox == null) {
+				logger.LogInformation("No matches found for {Ids}", string.Join(", ", ids));
+				
+				if (string.IsNullOrWhiteSpace(coreConfig.CurrentValue.NoResultsEmote)) {
+					return;
+				}
+
+				try {
+					await args.Message.CreateReactionAsync(DiscordEmoji.FromName(discord, coreConfig.CurrentValue.NoResultsEmote, true));
+				} catch (NotFoundException) {
+				} catch (UnauthorizedException) {
+				}
+				
+				return;
+			}
+
+			try {
+				await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("📷"));
+			} catch (NotFoundException) {
+				return;
+			} catch (UnauthorizedException) {
+				return;
+			}
+
+			string typeName = photobox.PhotoType switch {
+				PhotoType.General => "Foto",
+				PhotoType.Interior => "Interieurfoto",
+				PhotoType.Detail => "Detailfoto",
+				PhotoType.Cabin => "Cabinefoto",
+				PhotoType.EngineRoom => "Motorruimtefoto"
+			};
+
+			lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
+			try {
+				await args.Message.RespondAsync(dmb => dmb
+					.WithEmbed(new DiscordEmbedBuilder()
+						.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
+						.WithTitle($"{typeName} van {photobox.Identity}")
+						.WithUrl(photobox.PageUrl)
+						.WithImageUrl(photobox.ImageUrl)
+						.WithFooter($"© {photobox.Photographer}, {photobox.Taken} | Geen reacties meer? Blokkeer mij")
+					)
+				);
+			} catch (NotFoundException) {
+				// Message was deleted
+			}
+		} catch (Exception ex) {
+			FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
+
+			logger.LogCritical(ex, report);
+
+			if (notifications != null) {
+				await notifications.SendNotificationAsync(report.ToString(), ex.Demystify());
+			}
+		}
+	});
 };
 
 await discord.ConnectAsync();
