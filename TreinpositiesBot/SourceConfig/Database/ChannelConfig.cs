@@ -1,4 +1,4 @@
-namespace TreinpositiesBot;
+namespace TreinpositiesBot.SourceConfig.Database;
 
 public class ChannelConfig {
 	public ulong Id { get; set; }

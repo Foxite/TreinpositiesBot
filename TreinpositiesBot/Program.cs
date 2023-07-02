@@ -13,6 +13,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TreinpositiesBot;
+using TreinpositiesBot.Config;
+using TreinpositiesBot.SourceConfig;
 
 var host = Host.CreateDefaultBuilder()
 	.ConfigureAppConfiguration((hbc, icb) => {
@@ -61,7 +63,7 @@ var host = Host.CreateDefaultBuilder()
 
 		isc.Add(new ServiceDescriptor(typeof(PhotoSourceProvider), boundSourcesConfig.Source switch {
 			SourcesConfigSource.Config => typeof(ConfigPhotoSourceProvider),
-			SourcesConfigSource.Postgres => typeof(DatabasePhotoSourceProvider),
+			SourcesConfigSource.Postgres => typeof(TreinpositiesBot.SourceConfig.Database.DatabasePhotoSourceProvider),
 		}, ServiceLifetime.Scoped));
 	})
 	.Build();

@@ -1,6 +1,6 @@
 using DSharpPlus.Entities;
 
-namespace TreinpositiesBot; 
+namespace TreinpositiesBot.SourceConfig;
 
 public class PhotoSourceService {
 	private readonly PhotoSourceProvider m_Provider;

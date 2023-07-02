@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
+using TreinpositiesBot.Config;
 
-namespace TreinpositiesBot;
+namespace TreinpositiesBot.SourceConfig;
 
 public class ConfigPhotoSourceProvider : PhotoSourceProvider {
 	private readonly IOptionsMonitor<SourcesConfig> m_Sources;
@@ -10,12 +11,13 @@ public class ConfigPhotoSourceProvider : PhotoSourceProvider {
 	}
 
 	public override Task<List<string>?> GetSourceNamesForChannelAsync(ulong guildId, ulong channelId) {
-		if (m_Sources.CurrentValue.SourcesByGuild == null) {
-			var ret = Task.FromResult<List<string>?>(null);
-			return ret;
-		} else {
-			m_Sources.CurrentValue.SourcesByGuild.TryGetValue(guildId, out List<string>? sourceNames);
-			return Task.FromResult(sourceNames);
+		if (m_Sources.CurrentValue.Guilds != null && m_Sources.CurrentValue.Guilds.TryGetValue(guildId, out GuildConfig? guildConfig)) {
+			if (guildConfig.Channels != null && guildConfig.Channels.TryGetValue(channelId, out ChannelConfig? channelConfig)) {
+				return Task.FromResult(channelConfig.Sources ?? guildConfig.Sources);
+			} else {
+				return Task.FromResult(guildConfig.Sources);
+			}
 		}
+		return Task.FromResult<List<string>?>(null);
 	}
 }

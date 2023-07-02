@@ -1,4 +1,4 @@
-namespace TreinpositiesBot;
+namespace TreinpositiesBot.SourceConfig.Database;
 
 public class DatabasePhotoSourceProvider : PhotoSourceProvider {
 	private readonly PhotoSourceDbContext m_DbContext;

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace TreinpositiesBot;
+namespace TreinpositiesBot.SourceConfig.Database;
 
 public class PhotoSourceDbContext : DbContext {
 	public DbSet<ServerConfig> ServerConfigs { get; set; }
