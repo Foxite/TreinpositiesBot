@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 
 namespace TreinpositiesBot; 
 
-// TODO: database implementation
 public abstract class ChannelConfigService {
 	private readonly IOptionsMonitor<CoreConfig> m_Options;
 

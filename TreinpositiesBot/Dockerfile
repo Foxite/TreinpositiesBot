@@ -3,13 +3,13 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["TreinpositiesBot.csproj", "TreinpositiesBot.csproj"]
-RUN dotnet restore "TreinpositiesBot.csproj"
+COPY ["TreinpositiesBot/TreinpositiesBot.csproj", "TreinpositiesBot/TreinpositiesBot.csproj"]
+RUN dotnet restore "TreinpositiesBot/TreinpositiesBot.csproj"
 COPY . .
-RUN dotnet build "TreinpositiesBot.csproj" -c Release -o /app/build
+RUN dotnet build "TreinpositiesBot/TreinpositiesBot.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "TreinpositiesBot.csproj" -c Release -o /app/publish
+RUN dotnet publish "TreinpositiesBot/TreinpositiesBot.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app

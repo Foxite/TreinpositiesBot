@@ -2,6 +2,13 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreinpositiesBot", "TreinpositiesBot\TreinpositiesBot.csproj", "{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAdmin.Backend", "WebAdmin.Backend\WebAdmin.Backend.csproj", "{FE0A93CB-7DC0-4511-A948-D48007F5A8B1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{82C323D9-377A-4071-A3BF-15F34E694E72}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +19,9 @@ Global
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE0A93CB-7DC0-4511-A948-D48007F5A8B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE0A93CB-7DC0-4511-A948-D48007F5A8B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE0A93CB-7DC0-4511-A948-D48007F5A8B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE0A93CB-7DC0-4511-A948-D48007F5A8B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

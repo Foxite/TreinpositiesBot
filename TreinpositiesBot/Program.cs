@@ -56,7 +56,11 @@ var host = Host.CreateDefaultBuilder()
 
 		isc.AddSingleton<PhotoSourceProvider>();
 
-		isc.AddSingleton<ChannelConfigService, ConfigChannelConfigService>();
+		if (string.IsNullOrWhiteSpace(hbc.Configuration.GetSection("Core").GetValue<string>("AdminBackendUrl"))) {
+			isc.AddSingleton<ChannelConfigService, ConfigChannelConfigService>();
+		} else {
+			isc.AddSingleton<ChannelConfigService, AdminBackendChannelConfigService>();
+		}
 	})
 	.Build();
 

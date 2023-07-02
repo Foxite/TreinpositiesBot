@@ -6,6 +6,7 @@ public class CoreConfig {
 	public string? NoResultsEmote { get; set; }
 	public int CooldownSeconds { get; set; }
 	public Dictionary<ulong, GuildConfig>? Guilds { get; set; }
+	public string? AdminBackendUrl { get; set; }
 
 	public TimeSpan Cooldown => TimeSpan.FromSeconds(CooldownSeconds);
 }
