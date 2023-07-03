@@ -96,6 +96,15 @@ discord.MessageCreated += async (unused, args) => {
 	}
 
 	var ccs = host.Services.GetRequiredService<ChannelConfigService>();
+
+	if (args.Message.Content.StartsWith(discord.CurrentUser.Mention + " test")) {
+		TimeSpan cooldown = await ccs.GetCooldownAsync(args.Channel);
+		ICollection<string>? sourceNames = await ccs.GetSourceNamesAsync(args.Channel);
+
+		await args.Message.RespondAsync($"{args.Channel.Mention}:\nCooldown: {cooldown.TotalSeconds}s\nSources: {(sourceNames == null ? "null" : string.Join(", ", sourceNames))}");
+		return;
+	}
+	
 	var sources = await host.Services.GetRequiredService<PhotoSourceProvider>().GetPhotoSources(args.Channel);
 
 	PhotoSource? chosenSource = null;
