@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{82C323
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "WebAdmin.Frontend", "WebAdmin.Frontend\WebAdmin.Frontend.shproj", "{769A7FE1-80BB-429A-BEED-CF0C58D3B9F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

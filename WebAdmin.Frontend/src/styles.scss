@@ -1,0 +1,47 @@
+:root {
+  @media (prefers-color-scheme: light) {
+    --color-scheme: light;
+
+    --base-background-color: white;
+    --elevated-background-color: #EEEEEE;
+    --header-background-color: #1976D2;
+
+    --base-text-color: black;
+    --link-color: #4576D2;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    --color-scheme: dark;
+
+    --base-background-color: #121212;
+    --elevated-background-color: #1E1E1E;
+    --header-background-color: #1946B2;
+
+    --base-text-color: white;
+    --link-color: #5796D2;
+  }
+}
+
+/* You can add global styles to this file, and also import other style files */
+html, body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+
+  margin: 0;
+
+  color-scheme: var(--color-scheme);
+  background-color: var(--base-background-color);
+  color: var(--base-text-color);
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.elevated {
+  background-color: var(--elevated-background-color);
+  border-radius: 0.25em;
+  padding: 0.5em;
+  margin: 0.5em;
+}

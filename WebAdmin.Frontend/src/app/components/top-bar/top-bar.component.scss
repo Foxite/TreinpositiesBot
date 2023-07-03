@@ -1,0 +1,62 @@
+.headerbar {
+	$headerheight: 4.5em;
+
+	color: white;
+	position: sticky;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: $headerheight;
+	display: flex;
+	align-items: center;
+	background-color: var(--header-background-color);
+	font-weight: 600;
+
+	& ul {
+		display: flex;
+		padding: 0;
+		list-style-type: none;
+		flex-direction: row;
+		margin: 0;
+
+		& > :first-child {
+			margin-left: 0.4em;
+		}
+
+		& > :last-child {
+			margin-right: 0.4em;
+		}
+
+		& li {
+			display: block;
+			float: left;
+			height: $headerheight;
+			line-height: $headerheight;
+			text-align: center;
+			transition-duration: 0.2s;
+			margin: 0 0.2em;
+
+			&:hover {
+				background-color: rgba(0, 0, 0, 0.2);
+			}
+
+			& a {
+				display: block;
+				text-decoration: none;
+				color: white;
+				padding: 0 0.4em;
+			}
+
+			&.logo {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				baseline-shift: 1em;
+			}
+		}
+	}
+
+	& .spacer {
+		flex: 1;
+	}
+}
