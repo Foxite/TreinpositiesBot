@@ -1,0 +1,12 @@
+<nav class="guildSelect">
+  <ol>
+    <li *ngFor="let guild of guilds | async" class="guildInfoItem" (click)="setCurrentGuildId(guild.id)">
+      <span class="icon"><img alt="{{guild.name}} icon" src="{{guild.iconUrl}}" /></span>
+      <span class="name">{{guild.name}}</span>
+    </li>
+  </ol>
+</nav>
+
+<div class="guildConfig">
+  {{currentGuildId}}
+</div>

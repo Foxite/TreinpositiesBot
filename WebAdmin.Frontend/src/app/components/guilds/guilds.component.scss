@@ -1,0 +1,19 @@
+.guildSelect {
+  width: 10cm;
+
+  & ol {
+    list-style: none;
+
+    & li {
+      background: var(--elevated-background-color);
+      margin-bottom: 0.5em;
+
+      & .icon img {
+        width: auto;
+        height: auto;
+        max-width: 1cm;
+        max-height: 1cm;
+      }
+    }
+  }
+}
