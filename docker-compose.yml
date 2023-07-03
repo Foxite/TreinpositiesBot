@@ -2,14 +2,22 @@ version: "3.3"
 
 services:
   bot:
-    build: TreinpositiesBot
+    build:
+      context: .
+      dockerfile: TreinpositiesBot/Dockerfile
+    env_file:
+      - bot.env
     environment:
-      Core__DiscordToken: # Bot token
-      Core__AdminBackendUrl: backend
+      Core__AdminBackendUrl: http://backend
   backend:
-    build: WebAdmin.Backend
+    build:
+      context: .
+      dockerfile: WebAdmin.Backend/Dockerfile
     environment:
-      Database: Host=database; Database=app-data; Port=5432; Username=app; Password=test123
+      Database: Host=database; Database=app-data; Port=5432; Username=app; Password=app
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "8180:80"
   database:
     image: "postgres:13.3"
     environment:
@@ -20,6 +28,12 @@ services:
       - "5432:5432"
     volumes:
       - database-data:/var/lib/postgresql/data/
+  frontend:
+    build:
+      context: WebAdmin.Frontend
+      dockerfile: WebAdmin.Frontend/docker/Dockerfile
+    ports:
+      - "8080:80"
       
 volumes:
   database-data:
