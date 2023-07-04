@@ -11,7 +11,7 @@ import {SecurityService} from "../../services/security/security.service";
   styleUrls: ['./guild.component.scss']
 })
 export class GuildComponent implements OnInit {
-  guildId!: number;
+  guildId!: number | null;
   guild!: GuildInfo | null;
 
   guildConfig!: GuildConfig | null;
@@ -22,7 +22,9 @@ export class GuildComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.updateGuildId(this.route.snapshot.params["guildId"]);
+    if (this.route.snapshot.params["guildId"]) {
+      this.updateGuildId(this.route.snapshot.params["guildId"]);
+    }
 
     this.route.paramMap.subscribe( paramMap => {
       this.updateGuildId(paramMap.get("guildId")!);
@@ -30,7 +32,11 @@ export class GuildComponent implements OnInit {
   }
 
   updateGuildId(guildId: string) {
-    console.log(guildId);
+    if (!guildId) {
+      this.guildId = null;
+      this.guild = null;
+      return;
+    }
 
     this.guildId = parseInt(guildId);
     // this triggers the ngOnChanges below
@@ -40,7 +46,6 @@ export class GuildComponent implements OnInit {
     this.ccs.getGuild(this.guildId)
       .then(gc => {
         // TODO remove spinner
-        console.log(gc);
         this.guildConfig = gc;
       })
       .catch(error => {

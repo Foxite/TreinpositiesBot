@@ -6,7 +6,9 @@ import {Injectable} from "@angular/core";
 
 @Injectable()
 export class DevSecurityService extends SecurityService {
-	override setup(): void { }
+	override setup(): void {
+    console.log("dev");
+  }
 	override login(): void { }
 	override logout(): void { }
 

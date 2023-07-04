@@ -9,6 +9,7 @@ import {ReactiveFormsModule} from "@angular/forms";
 import { GuildsComponent } from './components/guilds/guilds.component';
 import { GuildComponent } from './components/guild/guild.component';
 import {SecurityModule} from "./services/security/security.module";
+import {DiscordService} from "./services/discord.service";
 
 @NgModule({
   declarations: [
@@ -25,7 +26,9 @@ import {SecurityModule} from "./services/security/security.module";
     TopBarModule,
     MainModule,
   ],
-  providers: [],
+  providers: [
+    DiscordService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {

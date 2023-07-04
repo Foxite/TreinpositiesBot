@@ -22,15 +22,12 @@ export class SecurityHttpInterceptor implements HttpInterceptor {
 	}
 
 	intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-		console.log(req.url);
 		if (this.shouldAuthorize(req)) {
-			console.log("yes");
 			return of(this.securityService.readyToAuthorize()).pipe(() => {
 				const authorizedRequest = this.securityService.authorizeRequest(req);
 				return next.handle(authorizedRequest);
 			})
 		} else {
-			console.log("no");
 			return next.handle(req);
 		}
 	}
