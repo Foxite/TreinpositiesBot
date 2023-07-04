@@ -8,17 +8,19 @@
 
     --base-text-color: black;
     --link-color: #4576D2;
+    --muted-text-color: darkgray;
   }
 
   @media (prefers-color-scheme: dark) {
     --color-scheme: dark;
 
     --base-background-color: #181818;
-    --elevated-background-color: #1E1E1E;
+    --elevated-background-color: #242424;
     --header-background-color: #1946B2;
 
     --base-text-color: white;
     --link-color: #5796D2;
+    --muted-text-color: #A7A7A7;
   }
 }
 
@@ -44,4 +46,8 @@ a {
   border-radius: 0.25em;
   padding: 0.5em;
   margin: 0.5em;
+}
+
+.muted {
+  color: var(--muted-text-color);
 }

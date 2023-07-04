@@ -1,19 +1,52 @@
+:host {
+  display: flex;
+  flex-direction: row;
+
+  padding: 1em;
+}
+
 .guildSelect {
-  width: 10cm;
+  width: 7.5cm;
 
   & ol {
     list-style: none;
+    padding-left: 0;
+    margin-right: 1em;
 
     & li {
       background: var(--elevated-background-color);
       margin-bottom: 0.5em;
 
-      & .icon img {
-        width: auto;
-        height: auto;
-        max-width: 1cm;
-        max-height: 1cm;
+      display: flex;
+      flex-direction: row;
+      padding: 0.2em;
+
+      & .icon {
+        width: 1cm;
+        height: 1cm;
+        margin-right: 0.5em;
+
+        & img {
+          width: auto;
+          height: auto;
+          max-width: 1cm;
+          max-height: 1cm;
+        }
+      }
+
+      & .name {
+        /* TODO: fix text alignment is slightly off */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-content: center;
       }
     }
   }
+}
+
+.guildConfig {
+  border: 1px solid white;
+  width: 100%;
+  padding: 0.7em;
 }

@@ -9,17 +9,17 @@ import {ChannelConfigService} from "../../services/channel-config.service";
   styleUrls: ['./guilds.component.scss']
 })
 export class GuildsComponent {
-  guilds!: Promise<GuildInfo[]>;
-  currentGuildId!: number | null;
+  guilds!: GuildInfo[];
+  currentGuild!: GuildInfo | null;
 
   constructor(private ccs: ChannelConfigService) {
   }
 
   ngOnInit(): void {
-    this.guilds = this.ccs.getGuilds();
+    this.guilds = Object.values(this.ccs.getGuilds());
   }
 
-  setCurrentGuildId(guildId: number) {
-    this.currentGuildId = guildId;
+  setCurrentGuild(guild: GuildInfo) {
+    this.currentGuild = guild;
   }
 }

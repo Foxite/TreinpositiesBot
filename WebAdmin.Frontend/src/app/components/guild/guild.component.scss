@@ -1,0 +1,27 @@
+.guildTitle {
+  display: flex;
+  flex-direction: row;
+  padding: 0.2em;
+
+  & .icon {
+    display: inline-block;
+    width: 1.5cm;
+    height: 1.5cm;
+    margin-right: 0.5em;
+
+    & img {
+      width: auto;
+      height: auto;
+      max-width: 1.5cm;
+      max-height: 1.5cm;
+    }
+  }
+
+  & .nameContainer {
+    /* TODO: fix text alignment is slightly off */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+  }
+}

@@ -6,6 +6,7 @@ import {GuildsComponent} from "./components/guilds/guilds.component";
 const routes: Routes = [
   {path: '', component: MainComponent},
   {path: 'guilds', component: GuildsComponent},
+  {path: 'guilds/:guildId', component: GuildsComponent},
 ];
 
 @NgModule({

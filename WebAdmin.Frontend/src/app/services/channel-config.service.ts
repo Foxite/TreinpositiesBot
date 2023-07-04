@@ -1,7 +1,6 @@
 import {Injectable} from '@angular/core';
 import {GuildConfig, GuildInfo} from "../models/models";
 import {lastValueFrom, Observable} from "rxjs";
-import { of as observableOf } from 'rxjs';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 
@@ -12,19 +11,20 @@ export class ChannelConfigService {
 	constructor(private http: HttpClient) {
 	}
 
-  getGuilds(): Promise<GuildInfo[]> {
-    return new Promise((res) => res([
-      {
+  // TODO move to user service
+  getGuilds(): Record<number, GuildInfo> {
+    return {
+      346682476149866497: {
         id: 346682476149866497,
         name: "Foxite's bot factory",
         iconUrl: "https://cdn.discordapp.com/icons/346682476149866497/efa839e385bd832d1b2edc33a40504ae.webp?size=512"
       },
-      {
+      872837910725017601: {
         id: 872837910725017601,
         name: "Corsac Emotes 2",
         iconUrl: null,
       }
-    ]));
+    };
   }
 
   getGuild(id: number): Promise<GuildConfig> {

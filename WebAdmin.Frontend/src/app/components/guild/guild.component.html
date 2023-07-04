@@ -1,1 +1,10 @@
-<p>guild works!</p>
+<div *ngIf="guild != null">
+  <h1 class="guildTitle">
+    <!-- TODO: fix when no icon -->
+    <span class="icon"><img src="{{guild.iconUrl}}" alt="{{guild.name}} icon" /></span>
+    <span class="nameContainer"><span class="name">{{guild.name}} <span class="id muted">({{guild.id}})</span></span></span>
+  </h1>
+</div>
+<div *ngIf="guildConfig != null">
+  {{JSON.stringify(guildConfig)}}
+</div>

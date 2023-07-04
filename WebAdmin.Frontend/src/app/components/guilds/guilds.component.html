@@ -1,6 +1,6 @@
 <nav class="guildSelect">
   <ol>
-    <li *ngFor="let guild of guilds | async" class="guildInfoItem" (click)="setCurrentGuildId(guild.id)">
+    <li *ngFor="let guild of guilds" class="guildInfoItem" [routerLink]="['/guilds/', guild.id]">
       <span class="icon"><img alt="{{guild.name}} icon" src="{{guild.iconUrl}}" /></span>
       <span class="name">{{guild.name}}</span>
     </li>
@@ -8,5 +8,5 @@
 </nav>
 
 <div class="guildConfig">
-  {{currentGuildId}}
+  <app-guild></app-guild>
 </div>
