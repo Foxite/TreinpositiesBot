@@ -1,5 +1,5 @@
 import {SecurityService} from "../security.service";
-import {filter, Observable, Subject, Subscriber} from "rxjs";
+import {filter, Observable, Subject} from "rxjs";
 import {User} from "../user";
 import {OAuthService} from "angular-oauth2-oidc";
 import {authCodeFlowConfig} from "../../../../environments/environment";
@@ -10,27 +10,19 @@ import {GuildInfo} from "../../../models/models";
 
 @Injectable()
 export class OAuthSecurityService extends SecurityService {
-  private static currentIndex = 0;
-
-  private index;
-	private profile: Subject<User | null>;
+	private readonly userSubject: Subject<User | null>;
   private user: User | null;
 
 	constructor(private oauthService: OAuthService,
               private discordService: DiscordService) {
 		super();
-    this.index = OAuthSecurityService.currentIndex++;
-    this.profile = new Subject<User | null>();
+    this.userSubject = new Subject<User | null>();
     this.user = null;
 	}
 
 	override setup(): void {
-    console.log("hoi!");
-    this.profile.subscribe(console.log);
-
 		this.oauthService.configure(authCodeFlowConfig);
 
-		// Automatically load user profile
 		this.oauthService.events
 			.pipe(filter((e) => e.type === 'token_received'))
 			.subscribe((_) => this.updateCurrentUser());
@@ -40,7 +32,6 @@ export class OAuthSecurityService extends SecurityService {
     this.oauthService.tryLogin()
       .then(async () => {
         if (this.oauthService.hasValidAccessToken()) {
-          console.log("tryLogin")
           await this.updateCurrentUser();
         } else {
           await this.oauthService.initLoginFlow();
@@ -56,13 +47,13 @@ export class OAuthSecurityService extends SecurityService {
     return this.user;
 	}
 
-	override userUpdated(): Observable<User | null> {
-		return this.profile;
+	override userObservable(): Observable<User | null> {
+		return this.userSubject;
 	}
 
 	override readyToAuthorize(): Promise<void> {
 		return new Promise((res, rej) => {
-			this.userUpdated().subscribe(user => {
+			this.userObservable().subscribe(user => {
 				if (user) {
 					res();
 				} else {
@@ -84,6 +75,14 @@ export class OAuthSecurityService extends SecurityService {
     const guilds = await this.discordService.getCurrentUserGuilds();
     const guildInfos: Record<number, GuildInfo> = {};
     for (const guild of guilds) {
+      const manageGuild = (1 << 5);
+      const admin = (1 << 3);
+
+      const hasNoRights = (guild.permissions & (manageGuild | admin)) == 0;
+      if (hasNoRights) {
+        continue;
+      }
+
       const guildId = parseInt(guild.id);
       guildInfos[guildId] = {
         id: guildId,
@@ -97,6 +96,6 @@ export class OAuthSecurityService extends SecurityService {
       guilds: guildInfos
     };
 
-    this.profile.next(this.user);
+    this.userSubject.next(this.user);
   }
 }

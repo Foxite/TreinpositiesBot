@@ -8,7 +8,7 @@ export abstract class SecurityService {
 	abstract login(): void;
 	abstract logout(): void;
 	abstract currentUser(): User | null;
-	abstract userUpdated(): Observable<User | null>;
+	abstract userObservable(): Observable<User | null>;
 	abstract readyToAuthorize(): Promise<void>;
 	abstract authorizeRequest(request: HttpRequest<any>): HttpRequest<any>;
 }

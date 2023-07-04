@@ -30,7 +30,7 @@ export class DevSecurityService extends SecurityService {
     };
 	}
 
-	override userUpdated(): Observable<User | null> {
+	override userObservable(): Observable<User | null> {
 		return new Observable(sub => sub.next(this.currentUser()));
 	}
 
@@ -39,11 +39,6 @@ export class DevSecurityService extends SecurityService {
 	}
 
 	override authorizeRequest(request: HttpRequest<any>): HttpRequest<any> {
-		return request.clone({
-			headers: request.headers
-				.append("x-debug-claims", "sub=Test User")
-				.append("x-debug-claims", "uid=1234")
-				.append("x-debug-claims", "role=Mellifera Admin")
-		});
+		return request;
 	}
 }

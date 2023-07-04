@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Observable} from "rxjs";
 import {GuildInfo} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
@@ -9,7 +9,7 @@ import {SecurityService} from "../../services/security/security.service";
   templateUrl: './guilds.component.html',
   styleUrls: ['./guilds.component.scss']
 })
-export class GuildsComponent {
+export class GuildsComponent implements OnInit {
   guilds!: GuildInfo[];
   currentGuild!: GuildInfo | null;
 
@@ -18,12 +18,15 @@ export class GuildsComponent {
   }
 
   ngOnInit(): void {
-    if (this.security.currentUser()) {
-      this.guilds = Object.values(this.security.currentUser()!.guilds);
+    const currentUser = this.security.currentUser();
+    if (currentUser) {
+      this.guilds = Object.values(currentUser.guilds);
     }
-  }
 
-  setCurrentGuild(guild: GuildInfo) {
-    this.currentGuild = guild;
+    this.security.userObservable().subscribe(user => {
+      if (user) {
+        this.guilds = Object.values(user.guilds);
+      }
+    });
   }
 }

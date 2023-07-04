@@ -1,6 +1,4 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {AppModule} from "../../app.module";
-import {filter} from "rxjs";
 import {SecurityService} from "../../services/security/security.service";
 import {User} from "../../services/security/user";
 
@@ -18,7 +16,7 @@ export class TopBarComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshUser(this.security.currentUser());
-    this.security.userUpdated().subscribe((user) => this.refreshUser(user));
+    this.security.userObservable().subscribe((user) => this.refreshUser(user));
   }
 
   private refreshUser(user: User | null) {

@@ -22,16 +22,18 @@ export class GuildComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.route.snapshot.params["guildId"]) {
-      this.updateGuildId(this.route.snapshot.params["guildId"]);
-    }
+    this.security.userObservable().subscribe(user => {
+      this.updateGuild();
+    });
 
     this.route.paramMap.subscribe( paramMap => {
-      this.updateGuildId(paramMap.get("guildId")!);
+      this.updateGuild();
     })
   }
 
-  updateGuildId(guildId: string) {
+  updateGuild() {
+    const guildId = this.route.snapshot.params["guildId"];
+
     if (!guildId) {
       this.guildId = null;
       this.guild = null;
@@ -40,6 +42,11 @@ export class GuildComponent implements OnInit {
 
     this.guildId = parseInt(guildId);
     // this triggers the ngOnChanges below
+
+    if (!this.security.currentUser()) {
+      return;
+    }
+
     this.guild = this.security.currentUser()!.guilds[this.guildId];
 
     // TODO show spinner
