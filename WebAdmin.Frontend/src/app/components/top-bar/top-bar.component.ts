@@ -17,28 +17,8 @@ export class TopBarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log("hey.");
     this.refreshUser(this.security.currentUser());
-    console.log(this.security);
-    const observable = this.security.userUpdated();
-
-    console.log(observable);
-    const self = this;
-    observable.subscribe({
-      complete() {
-        console.error("completeE????");
-      },
-      error(err) {
-        console.error("errroror????");
-        console.error(err);
-      },
-      next(user) {
-        console.log("oh hi!");
-        console.log(user);
-        self.refreshUser(user);
-      }
-    });
-    console.log(observable);
+    this.security.userUpdated().subscribe((user) => this.refreshUser(user));
   }
 
   private refreshUser(user: User | null) {
