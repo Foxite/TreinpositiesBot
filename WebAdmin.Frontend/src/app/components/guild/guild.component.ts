@@ -3,6 +3,7 @@ import {GuildConfig, GuildInfo} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
 import {GuildsComponent} from "../guilds/guilds.component";
 import {ActivatedRoute} from "@angular/router";
+import {SecurityService} from "../../services/security/security.service";
 
 @Component({
   selector: 'app-guild',
@@ -16,6 +17,7 @@ export class GuildComponent implements OnInit {
   guildConfig!: GuildConfig | null;
 
   constructor(private ccs: ChannelConfigService,
+              private security: SecurityService,
               private route: ActivatedRoute) {
   }
 
@@ -32,7 +34,7 @@ export class GuildComponent implements OnInit {
 
     this.guildId = parseInt(guildId);
     // this triggers the ngOnChanges below
-    this.guild = this.ccs.getGuilds()[this.guildId];
+    this.guild = this.security.currentUser()!.guilds[this.guildId];
 
     // TODO show spinner
     this.ccs.getGuild(this.guildId)

@@ -19,8 +19,8 @@ export class OAuthSecurityService extends SecurityService {
 
 	override setup(): void {
 		this.oauthService.configure(authCodeFlowConfig);
-		this.oauthService.loadDiscoveryDocument(authCodeFlowConfig.discoveryDocumentUrl)
-			.then(() => this.oauthService.tryLogin())
+		//this.oauthService.loadDiscoveryDocument(authCodeFlowConfig.discoveryDocumentUrl)
+    this.oauthService.tryLogin()
 			.then(() => {
 				if (!this.oauthService.hasValidIdToken() || !this.oauthService.hasValidAccessToken()) {
 					this.oauthService.initLoginFlow();
@@ -49,7 +49,12 @@ export class OAuthSecurityService extends SecurityService {
 		if (!claims || !claims.hasOwnProperty('name')) {
 			return null;
 		} else {
-			return new User(claims['name']);
+			//return new User(claims['name']);
+      // TODO
+      return {
+        name: claims['name'],
+        guilds: {}
+      };
 		}
 	}
 

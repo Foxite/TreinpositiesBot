@@ -1,4 +1,6 @@
-export class User {
-	constructor(public name: string) {
-	}
+import {GuildInfo} from "../../models/models";
+
+export interface User {
+	name: string;
+  guilds: Record<number, GuildInfo>;
 }

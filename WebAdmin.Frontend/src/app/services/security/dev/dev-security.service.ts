@@ -11,7 +11,21 @@ export class DevSecurityService extends SecurityService {
 	override logout(): void { }
 
 	override currentUser(): User | null {
-		return new User("Test User");
+		return {
+      name: "Test User",
+      guilds: {
+        346682476149866497: {
+          id: 346682476149866497,
+          name: "Foxite's bot factory",
+          iconUrl: "https://cdn.discordapp.com/icons/346682476149866497/efa839e385bd832d1b2edc33a40504ae.webp?size=512"
+        },
+        872837910725017601: {
+          id: 872837910725017601,
+          name: "Corsac Emotes 2",
+          iconUrl: null,
+        }
+      }
+    };
 	}
 
 	override userUpdated(): Observable<User | null> {

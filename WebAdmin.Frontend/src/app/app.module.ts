@@ -8,6 +8,7 @@ import {HttpClientModule} from "@angular/common/http";
 import {ReactiveFormsModule} from "@angular/forms";
 import { GuildsComponent } from './components/guilds/guilds.component';
 import { GuildComponent } from './components/guild/guild.component';
+import {SecurityModule} from "./services/security/security.module";
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import { GuildComponent } from './components/guild/guild.component';
     GuildComponent
   ],
   imports: [
+    SecurityModule,
     HttpClientModule,
     ReactiveFormsModule,
     BrowserModule,
