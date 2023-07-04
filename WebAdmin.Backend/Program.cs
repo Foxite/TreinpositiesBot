@@ -25,6 +25,11 @@ if (app.Environment.IsDevelopment()) {
 	app.UseSwaggerUI();
 }
 
+string[]? allowedCorsOrigins = app.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>();
+if (allowedCorsOrigins != null) {
+	app.UseCors(cpb => cpb.WithOrigins(allowedCorsOrigins));
+}
+
 app.UseAuthorization();
 
 app.MapControllers();

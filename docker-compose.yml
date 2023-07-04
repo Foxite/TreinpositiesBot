@@ -16,6 +16,7 @@ services:
     environment:
       Database: Host=database; Database=app-data; Port=5432; Username=app; Password=app
       ASPNETCORE_ENVIRONMENT: Development
+      AllowedCorsOrigins__0: "http://localhost:4200"
     ports:
       - "8180:80"
   database:
