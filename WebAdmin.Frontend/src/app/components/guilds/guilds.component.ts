@@ -20,11 +20,13 @@ export class GuildsComponent implements OnInit {
   ngOnInit(): void {
     const currentUser = this.security.currentUser();
     if (currentUser) {
+      console.log(currentUser);
       this.guilds = Object.values(currentUser.guilds);
     }
 
     this.security.userObservable().subscribe(user => {
       if (user) {
+        console.log(user);
         this.guilds = Object.values(user.guilds);
       }
     });

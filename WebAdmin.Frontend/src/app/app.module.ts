@@ -3,7 +3,6 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {TopBarModule} from "./components/top-bar/top-bar.module";
-import {MainModule} from "./components/main/main.module";
 import {HttpClientModule} from "@angular/common/http";
 import {ReactiveFormsModule} from "@angular/forms";
 import { GuildsComponent } from './components/guilds/guilds.component';
@@ -24,7 +23,6 @@ import {DiscordService} from "./services/discord.service";
     BrowserModule,
     AppRoutingModule,
     TopBarModule,
-    MainModule,
   ],
   providers: [
     DiscordService

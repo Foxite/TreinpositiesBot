@@ -1,15 +1,23 @@
 import {NgModule} from "@angular/core";
-import {environment} from "../../../environments/environment";
 import {HTTP_INTERCEPTORS} from "@angular/common/http";
 import {SecurityHttpInterceptor} from "./interceptor";
-import {DevSecurityModule} from "./dev/dev-security.module";
-import {OAuthSecurityModule} from "./oauth/oauth-security.module";
+import {OAuthModule, OAuthStorage} from "angular-oauth2-oidc";
+import {SecurityService} from "./security.service";
 
 @NgModule({
 	imports: [
-		environment.useAuth ? OAuthSecurityModule : DevSecurityModule,
+    OAuthModule.forRoot({
+      resourceServer: {
+        sendAccessToken: false
+      }
+    })
 	],
 	providers: [
+    SecurityService,
+    {
+      provide: OAuthStorage,
+      useValue: localStorage
+    },
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: SecurityHttpInterceptor,
