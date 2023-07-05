@@ -13,6 +13,8 @@ services:
     build:
       context: .
       dockerfile: WebAdmin.Backend/Dockerfile
+    env_file:
+      - bot.env
     environment:
       Database: Host=database; Database=app-data; Port=5432; Username=app; Password=app
       ASPNETCORE_ENVIRONMENT: Development

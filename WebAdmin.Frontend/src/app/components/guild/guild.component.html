@@ -7,9 +7,11 @@
 <div *ngIf="guildConfig != null" class="guildConfig">
   <div class="channelSelect">
     <ol class="categories">
+      <!-- TODO list item for default guild settings -->
       <li *ngFor="let category of guildConfig?.categories">
-        <details><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
-          <ol>
+        <details open><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
+          <ol class="boxlist">
+            <!-- TODO selectable -->
             <li *ngFor="let channel of category.channels">
               <span class="name">{{channel.name}}</span>
             </li>
@@ -19,8 +21,8 @@
     </ol>
   </div>
 
-  <!-- TODO show configuration form -->
   <div class="configForm">
+    <!-- TODO show configuration form -->
     {{JSON.stringify(guildConfig)}}
   </div>
 </div>

@@ -1,8 +1,9 @@
 import {Component, OnInit} from '@angular/core';
-import {Observable} from "rxjs";
 import {GuildInfo} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
 import {SecurityService} from "../../services/security/security.service";
+import {ActivatedRoute, EventType, Router} from "@angular/router";
+import {User} from "../../services/security/user";
 
 @Component({
   selector: 'app-guilds',
@@ -11,24 +12,35 @@ import {SecurityService} from "../../services/security/security.service";
 })
 export class GuildsComponent implements OnInit {
   guilds!: GuildInfo[];
-  currentGuild!: GuildInfo | null;
+  currentGuildId!: string | null;
 
   constructor(private ccs: ChannelConfigService,
-              private security: SecurityService) {
+              private security: SecurityService,
+              private router: Router,
+              private activatedRoute: ActivatedRoute) {
   }
 
   ngOnInit(): void {
+    this.router.events.subscribe(evt => {
+      if (evt.type == EventType.NavigationEnd) {
+        this.currentGuildId = this.activatedRoute.snapshot.params['guildId'];
+      }
+    });
+
     const currentUser = this.security.currentUser();
     if (currentUser) {
-      console.log(currentUser);
-      this.guilds = Object.values(currentUser.guilds);
+      this.updateGuilds(currentUser);
     }
 
     this.security.userObservable().subscribe(user => {
       if (user) {
-        console.log(user);
-        this.guilds = Object.values(user.guilds);
+        this.updateGuilds(user);
       }
     });
+  }
+
+  updateGuilds(user: User) {
+    console.log(user);
+    this.guilds = Object.values(user.guilds);
   }
 }

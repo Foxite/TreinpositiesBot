@@ -4,6 +4,8 @@
 
     --base-background-color: white;
     --elevated-background-color: #EEEEEE;
+    --elevated15-background-color: #E7E7E7;
+    --elevated2-background-color: #DDDDDD;
     --header-background-color: #1976D2;
 
     --base-text-color: black;
@@ -16,6 +18,8 @@
 
     --base-background-color: #181818;
     --elevated-background-color: #242424;
+    --elevated15-background-color: #272727;
+    --elevated2-background-color: #303030;
     --header-background-color: #1946B2;
 
     --base-text-color: white;
@@ -50,4 +54,23 @@ a {
 
 .muted {
   color: var(--muted-text-color);
+}
+
+ol.boxlist {
+  list-style: none;
+  padding-left: 0;
+
+  & > li {
+    background-color: var(--elevated-background-color);
+
+    &:hover {
+      background-color: var(--elevated2-background-color);
+    }
+
+    &.active {
+      background-color: var(--elevated2-background-color);
+    }
+
+    margin-bottom: 0.5em;
+  }
 }
