@@ -25,3 +25,33 @@
     align-content: center;
   }
 }
+
+.guildConfig {
+  display: flex;
+  flex-direction: row;
+
+  & .channelSelect {
+    flex-grow: 1;
+    flex-shrink: 0;
+
+    & h4 {
+      display: inline;
+      margin: 0;
+    }
+
+    & ol {
+      list-style: none;
+    }
+
+    & > ol {
+      padding: 0;
+
+      & ol {
+        padding: 0.5em;
+      }
+    }
+  }
+
+  & .configForm {
+  }
+}

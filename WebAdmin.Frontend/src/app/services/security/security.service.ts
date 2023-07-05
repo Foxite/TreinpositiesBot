@@ -3,7 +3,7 @@ import {User} from "./user";
 import {HttpRequest} from "@angular/common/http";
 import {Injectable} from "@angular/core";
 import {OAuthService} from "angular-oauth2-oidc";
-import {DiscordService} from "../discord.service";
+import {DiscordService} from "../discord/discord.service";
 import {authCodeFlowConfig} from "../../../environments/environment";
 import {GuildInfo} from "../../models/models";
 
@@ -72,7 +72,7 @@ export class SecurityService {
   private async updateCurrentUser(): Promise<void> {
     const currentAuth = await this.discordService.getCurrentAuthorization();
     const guilds = await this.discordService.getCurrentUserGuilds();
-    const guildInfos: Record<number, GuildInfo> = {};
+    const guildInfos: Record<string, GuildInfo> = {};
     for (const guild of guilds) {
       const manageGuild = (1 << 5);
       const admin = (1 << 3);
@@ -82,7 +82,7 @@ export class SecurityService {
         continue;
       }
 
-      const guildId = parseInt(guild.id);
+      const guildId = guild.id;
       guildInfos[guildId] = {
         id: guildId,
         name: guild.name,

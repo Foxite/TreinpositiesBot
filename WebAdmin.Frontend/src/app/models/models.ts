@@ -1,19 +1,26 @@
-export interface GuildConfig {
-  id: number;
-  cooldownSeconds: number | null;
-  sourceNames: string[] | null;
-  channels: ChannelConfig[];
-}
-
-export interface ChannelConfig {
-  guildId: number;
-  id: number;
-  cooldownSeconds: number | null;
-  sourceNames: string[] | null;
-}
-
 export interface GuildInfo {
-  id: number;
+  id: string;
   name: string;
   iconUrl: string | null;
+}
+
+export interface GuildConfig {
+  id: string;
+  cooldownSeconds: number | null;
+  sourceNames: string[] | null;
+  categories: GuildChannelCategory[];
+}
+
+export interface GuildChannelCategory {
+  id: string | null;
+  name: string | null;
+  channels: GuildChannelConfig[];
+}
+
+export interface GuildChannelConfig {
+  id: string;
+  name: string;
+  type: string;
+  cooldownSeconds: number | null;
+  sourceNames: string[] | null;
 }

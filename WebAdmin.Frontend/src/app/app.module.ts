@@ -8,7 +8,7 @@ import {ReactiveFormsModule} from "@angular/forms";
 import { GuildsComponent } from './components/guilds/guilds.component';
 import { GuildComponent } from './components/guild/guild.component';
 import {SecurityModule} from "./services/security/security.module";
-import {DiscordService} from "./services/discord.service";
+import {DiscordService} from "./services/discord/discord.service";
 
 @NgModule({
   declarations: [

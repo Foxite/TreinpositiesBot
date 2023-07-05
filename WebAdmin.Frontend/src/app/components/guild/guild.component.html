@@ -1,15 +1,27 @@
-<div *ngIf="guild != null">
+<div *ngIf="guild != null" class="guildHeader">
   <h1 class="guildTitle">
     <!-- TODO: fix when no icon -->
     <span class="icon"><img src="{{guild.iconUrl}}" alt="{{guild.name}} icon" /></span>
     <span class="nameContainer"><span class="name">{{guild.name}} <span class="id muted">({{guild.id}})</span></span></span>
   </h1>
 </div>
-<div *ngIf="guild != null">
-  <!-- TODO show channel selection -->
-  {{JSON.stringify(guild)}}
-</div>
-<div *ngIf="guildConfig != null">
+<div *ngIf="guildConfig != null" class="guildConfig">
+  <div class="channelSelect">
+    <ol class="categories">
+      <li *ngFor="let category of guildConfig?.categories">
+        <details><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
+          <ol>
+            <li *ngFor="let channel of category.channels">
+              <span class="name">{{channel.name}}</span>
+            </li>
+          </ol>
+        </details>
+      </li>
+    </ol>
+  </div>
+
   <!-- TODO show configuration form -->
-  {{JSON.stringify(guildConfig)}}
+  <div class="configForm">
+    {{JSON.stringify(guildConfig)}}
+  </div>
 </div>

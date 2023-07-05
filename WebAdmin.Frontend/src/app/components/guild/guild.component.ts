@@ -1,9 +1,9 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {GuildConfig, GuildInfo} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
-import {GuildsComponent} from "../guilds/guilds.component";
 import {ActivatedRoute} from "@angular/router";
 import {SecurityService} from "../../services/security/security.service";
+import {DiscordService} from "../../services/discord/discord.service";
 
 @Component({
   selector: 'app-guild',
@@ -11,13 +11,13 @@ import {SecurityService} from "../../services/security/security.service";
   styleUrls: ['./guild.component.scss']
 })
 export class GuildComponent implements OnInit {
-  guildId!: number | null;
+  guildId!: string | null;
   guild!: GuildInfo | null;
-
   guildConfig!: GuildConfig | null;
 
   constructor(private ccs: ChannelConfigService,
               private security: SecurityService,
+              private discord: DiscordService,
               private route: ActivatedRoute) {
   }
 
@@ -32,22 +32,17 @@ export class GuildComponent implements OnInit {
   }
 
   updateGuild() {
-    const guildId = this.route.snapshot.params["guildId"];
-
-    if (!guildId) {
-      this.guildId = null;
+    this.guildId = this.route.snapshot.params["guildId"];
+    if (!this.guildId) {
       this.guild = null;
       return;
     }
-
-    this.guildId = parseInt(guildId);
-    // this triggers the ngOnChanges below
 
     if (!this.security.currentUser()) {
       return;
     }
 
-    this.guild = this.security.currentUser()!.guilds[this.guildId];
+    this.guild = this.security.currentUser()!.guilds[this.guildId!];
 
     // TODO show spinner
     this.ccs.getGuild(this.guildId)

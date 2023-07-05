@@ -1,6 +1,9 @@
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {lastValueFrom} from "rxjs";
+import {DiscordCurrentAuthorization} from "./discord-current-authorization";
+import {DiscordGuildSummary} from "./discord-guild-summary";
+import {CachedValue} from "./cached-value";
 
 @Injectable()
 export class DiscordService {
@@ -43,43 +46,4 @@ export class DiscordService {
   getCurrentUserGuilds(): Promise<DiscordGuildSummary[]> {
     return this.getCachedOrApi(`${this.apiUrl}/users/@me/guilds`, 60);
   }
-}
-
-class CachedValue {
-  constructor(public retrieved: Date,
-              public value: any) {}
-}
-
-export interface DiscordCurrentAuthorization {
-  application: {
-    id: string,
-    name: string,
-    icon: string,
-    description: string,
-    hook: boolean,
-    bot_public: boolean,
-    bot_require_code_grant: boolean,
-    verify_key: string
-  };
-  scopes: string[];
-  expires: Date;
-  user: {
-    id: string,
-    username: string,
-    global_name: string,
-    avatar: string,
-    discriminator: string,
-    public_flags: number
-    avatar_decoration: unknown
-  };
-}
-
-export interface DiscordGuildSummary {
-  id: string;
-  name: string;
-  icon: string;
-  owner: boolean;
-  permissions: number;
-  permissions_new: string; // unknown
-  features: string[];
 }
