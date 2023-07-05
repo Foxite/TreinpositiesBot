@@ -33,7 +33,7 @@ public class ChannelConfigController : ControllerBase {
 		
 		IEnumerable<GuildChannelConfig> GetGuildChannelConfigs(IEnumerable<IGuildChannel> discordChannels) =>
 			from discordChannel in discordChannels
-			orderby discordChannel.Position
+			orderby discordChannel.GetChannelType() is ChannelType.Stage or ChannelType.Voice, discordChannel.Position
 			where discordChannel is not RestCategoryChannel
 			let entityChannel = entityChannels.FirstOrDefault(entityChannel => entityChannel.Id == discordChannel.Id) ?? new Channel() {
 				Id = discordChannel.Id,
