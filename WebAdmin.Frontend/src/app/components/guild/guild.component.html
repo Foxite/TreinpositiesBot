@@ -1,8 +1,7 @@
 <div *ngIf="guild != null" class="guildHeader">
-  <h1 class="guildTitle">
-    <!-- TODO: fix when no icon -->
-    <span class="icon"><img src="{{guild.iconUrl}}" alt="{{guild.name}} icon" /></span>
-    <span class="nameContainer"><span class="name">{{guild.name}} <span class="id muted">({{guild.id}})</span></span></span>
+  <span class="icon"><img src="{{guild.iconUrl}}" alt="{{guild.name}} icon" /></span>
+  <h1 class="nameContainer">
+    <span class="name">{{guild.name}} <span class="id muted">({{guild.id}})</span></span>
   </h1>
 </div>
 <div *ngIf="guildConfig != null" class="guildConfig">
