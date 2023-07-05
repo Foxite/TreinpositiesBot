@@ -1,3 +1,5 @@
+using Discord;
+using Discord.Rest;
 using Microsoft.EntityFrameworkCore;
 using WebAdmin.Backend.Entities;
 
@@ -12,12 +14,17 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(dbcob => dbcob.UseNpgsql(builder.Configuration.GetValue<string>("Database")));
 
+builder.Services.AddSingleton<DiscordRestClient>();
+
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope()) {
 	await using var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 	await dbContext.Database.MigrateAsync();
 }
+
+var discord = app.Services.GetRequiredService<DiscordRestClient>();
+await discord.LoginAsync(TokenType.Bot, app.Services.GetRequiredService<IConfiguration>().GetValue<string>("DiscordToken"));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
