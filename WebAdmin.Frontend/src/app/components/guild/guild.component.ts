@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
-import {GuildConfig, GuildInfo} from "../../models/models";
+import {GuildChannelConfig, GuildConfig, GuildInfo} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, EventType, Router} from "@angular/router";
 import {SecurityService} from "../../services/security/security.service";
 import {DiscordService} from "../../services/discord/discord.service";
 
@@ -15,9 +15,15 @@ export class GuildComponent implements OnInit {
   guild!: GuildInfo | null;
   guildConfig!: GuildConfig | null;
 
+  itemConfig!: (GuildConfig | GuildChannelConfig) | undefined;
+
+  // For debugging only
+  protected readonly JSON = JSON;
+
   constructor(private ccs: ChannelConfigService,
               private security: SecurityService,
               private discord: DiscordService,
+              private router: Router,
               private route: ActivatedRoute) {
   }
 
@@ -26,13 +32,19 @@ export class GuildComponent implements OnInit {
       this.updateGuild();
     });
 
-    this.route.paramMap.subscribe( paramMap => {
+    this.route.paramMap.subscribe(paramMap => {
       this.updateGuild();
+      this.updateSelectedItem();
     })
   }
 
   updateGuild() {
-    this.guildId = this.route.snapshot.params["guildId"];
+    const newGuildId = this.route.snapshot.params["guildId"];
+
+    if (newGuildId == this.guildId) {
+      return;
+    }
+
     if (!this.guildId) {
       this.guild = null;
       return;
@@ -56,5 +68,26 @@ export class GuildComponent implements OnInit {
       });
   }
 
-  protected readonly JSON = JSON;
+  updateSelectedItem() {
+    const newItemId = this.route.snapshot.params["guildId"];
+
+    if ((newItemId == null && this.itemConfig == null) || (newItemId == this.itemConfig?.id)) {
+      return;
+    }
+
+    if (!this.guildConfig) {
+      return;
+    }
+
+    if (newItemId === null) {
+      this.itemConfig = this.guildConfig;
+    } else {
+      for (const category of this.guildConfig?.categories) {
+        this.itemConfig = category.channels.find(channel => channel.id == newItemId);
+        if (this.itemConfig != null) {
+          return;
+        }
+      }
+    }
+  }
 }

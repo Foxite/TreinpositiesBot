@@ -1,6 +1,6 @@
 <nav class="guildSelect">
   <ol class="boxlist">
-    <li *ngFor="let guild of guilds" class="guildInfoItem {{ guild.id == currentGuildId ? 'active' : 'inactive' }} " [routerLink]="['/guilds/', guild.id]">
+    <li *ngFor="let guild of guilds" class="guildInfoItem {{ guild.id == currentGuildId ? 'active' : 'inactive' }}" [routerLink]="['/guilds/', guild.id]">
       <span class="icon"><img alt="{{guild.name}} icon" src="{{guild.iconUrl}}" /></span>
       <span class="name">{{guild.name}}</span>
     </li>

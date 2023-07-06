@@ -8,11 +8,14 @@
   <div class="channelSelect">
     <ol class="categories">
       <!-- TODO list item for default guild settings -->
+      <li [routerLink]="['/guilds/', guildConfig.id]">
+        <span class="name">Server-wide default</span>
+      </li>
       <li *ngFor="let category of guildConfig?.categories">
         <details open><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
           <ol class="boxlist">
             <!-- TODO selectable -->
-            <li *ngFor="let channel of category.channels">
+            <li *ngFor="let channel of category.channels" [routerLink]="['/guilds/', guildConfig.id, channel.id]">
               <span class="name">{{channel.name}}</span>
             </li>
           </ol>
