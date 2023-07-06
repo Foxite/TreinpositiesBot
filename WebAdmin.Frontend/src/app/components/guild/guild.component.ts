@@ -29,13 +29,17 @@ export class GuildComponent implements OnInit {
 
   ngOnInit() {
     this.security.userObservable().subscribe(user => {
+      console.log("yo");
       this.updateGuild();
     });
 
     this.route.paramMap.subscribe(paramMap => {
       this.updateGuild();
       this.updateSelectedItem();
-    })
+    });
+
+    this.updateGuild();
+    this.updateSelectedItem();
   }
 
   updateGuild() {
@@ -44,7 +48,9 @@ export class GuildComponent implements OnInit {
     if (newGuildId == this.guildId) {
       return;
     }
+    console.log("updateGuild");
 
+    this.guildId = newGuildId;
     if (!this.guildId) {
       this.guild = null;
       return;
@@ -69,11 +75,12 @@ export class GuildComponent implements OnInit {
   }
 
   updateSelectedItem() {
-    const newItemId = this.route.snapshot.params["guildId"];
+    const newItemId = this.route.snapshot.params["channelId"];
 
     if ((newItemId == null && this.itemConfig == null) || (newItemId == this.itemConfig?.id)) {
       return;
     }
+    console.log("updateSelectedItem", newItemId, this.itemConfig?.id);
 
     if (!this.guildConfig) {
       return;

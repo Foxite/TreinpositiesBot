@@ -6,6 +6,7 @@ const routes: Routes = [
   {path: '', component: GuildsComponent},
   {path: 'guilds', component: GuildsComponent},
   {path: 'guilds/:guildId', component: GuildsComponent},
+  {path: 'guilds/:guildId/:channelId', component: GuildsComponent},
 ];
 
 @NgModule({

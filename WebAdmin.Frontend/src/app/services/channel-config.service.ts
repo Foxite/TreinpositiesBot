@@ -12,6 +12,9 @@ export class ChannelConfigService {
 	}
 
   getGuild(id: string): Promise<GuildConfig> {
+    if (id.endsWith("500")) {
+      throw new Error("fug");
+    }
     return lastValueFrom(this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`));
   }
 

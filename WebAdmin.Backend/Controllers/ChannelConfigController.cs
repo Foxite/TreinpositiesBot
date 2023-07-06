@@ -39,7 +39,7 @@ public class ChannelConfigController : ControllerBase {
 				Id = discordChannel.Id,
 			}
 			select new GuildChannelConfig(
-				discordChannel.Id,
+				discordChannel.Id.ToString(),
 				discordChannel.Name,
 				discordChannel.GetChannelType().Value,
 				entityChannel.CooldownSeconds,
@@ -57,7 +57,7 @@ public class ChannelConfigController : ControllerBase {
 			.Select(grouping => new {
 				Position = grouping.Key.HasValue ? allChannels.First(rgc => rgc.Id == grouping.Key.Value).Position : -1,
 				Gcc = new GuildChannelCategory(
-					grouping.Key,
+					grouping.Key?.ToString(),
 					grouping.Key.HasValue ? allChannels.First(rgc => rgc.Id == grouping.Key.Value).Name : null,
 					GetGuildChannelConfigs(grouping).ToList()
 				),
@@ -67,7 +67,7 @@ public class ChannelConfigController : ControllerBase {
 			.ToList();
 		
 		return Ok(new GuildConfig(
-			guildId,
+			guildId.ToString(),
 			guild.CooldownSeconds,
 			guild.SourceNames,
 			channelCategories
@@ -177,20 +177,20 @@ public class ChannelConfigController : ControllerBase {
 }
 
 public record GuildConfig(
-	ulong Id,
+	string Id,
 	float? CooldownSeconds,
 	string[]? SourceNames,
 	IList<GuildChannelCategory> Categories
 );
 
 public record GuildChannelCategory(
-	ulong? Id,
+	string? Id,
 	string? Name,
 	IList<GuildChannelConfig> Channels
 );
 
 public record GuildChannelConfig(
-	ulong Id,
+	string Id,
 	string Name,
 	ChannelType Type,
 	float? CooldownSeconds,

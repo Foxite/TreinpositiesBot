@@ -26,6 +26,8 @@
 
   <div class="configForm">
     <!-- TODO show configuration form -->
-    {{JSON.stringify(guildConfig)}}
+    <div *ngIf="itemConfig">
+      {{JSON.stringify(itemConfig)}}
+    </div>
   </div>
 </div>
