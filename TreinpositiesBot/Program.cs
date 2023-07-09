@@ -64,7 +64,7 @@ var logger = host.Services.GetRequiredService<ILogger<Program>>();
 var coreConfig = host.Services.GetRequiredService<IOptionsMonitor<CoreConfig>>();
 var discord = host.Services.GetRequiredService<DiscordClient>();
 
-var lastSendPerUser = new ConcurrentDictionary<ulong, DateTime>();
+var cooldowns = new ConcurrentDictionary<(ulong UserId, ulong ChannelId), DateTime>();
 
 DiscordWebhookLibNotificationSender? notifications = null;
 string? webhookUrl = coreConfig.CurrentValue.ErrorWebhookUrl;
@@ -109,7 +109,7 @@ discord.MessageCreated += async (unused, args) => {
 		return;
 	}
 	
-	if (lastSendPerUser.TryGetValue(args.Author.Id, out DateTime lastSend) && DateTime.UtcNow - lastSend <= await ccs.GetCooldownAsync(args.Channel)) {
+	if (cooldowns.TryGetValue((args.Author.Id, args.Channel.Id), out DateTime lastSend) && DateTime.UtcNow - lastSend <= await ccs.GetCooldownAsync(args.Channel)) {
 		try {
 			await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
 		} catch (NotFoundException) {
@@ -156,7 +156,7 @@ discord.MessageCreated += async (unused, args) => {
 				PhotoType.EngineRoom => "Motorruimtefoto"
 			};
 
-			lastSendPerUser[args.Message.Author.Id] = DateTime.UtcNow;
+			cooldowns[(args.Message.Author.Id, args.Channel.Id)] = DateTime.UtcNow;
 			try {
 				await args.Message.RespondAsync(dmb => dmb
 					.WithEmbed(new DiscordEmbedBuilder()
