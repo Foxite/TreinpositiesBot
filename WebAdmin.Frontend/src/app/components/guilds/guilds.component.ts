@@ -40,7 +40,6 @@ export class GuildsComponent implements OnInit {
   }
 
   updateGuilds(user: User) {
-    console.log(user);
     this.guilds = Object.values(user.guilds);
   }
 }

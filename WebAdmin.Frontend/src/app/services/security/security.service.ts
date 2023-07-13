@@ -86,7 +86,7 @@ export class SecurityService {
       guildInfos[guildId] = {
         id: guildId,
         name: guild.name,
-        iconUrl: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+        iconUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
       };
     }
 

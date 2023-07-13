@@ -8,7 +8,7 @@
   <div class="channelSelect">
     <ol class="categories">
       <!-- TODO list item for default guild settings -->
-      <li [routerLink]="['/guilds/', guildConfig.id]">
+      <li [routerLink]="['/guilds/', guildConfig.id, '0']">
         <span class="name">Server-wide default</span>
       </li>
       <li *ngFor="let category of guildConfig?.categories">

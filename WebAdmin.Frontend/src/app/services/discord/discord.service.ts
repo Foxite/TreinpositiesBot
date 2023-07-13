@@ -15,23 +15,13 @@ export class DiscordService {
   private async getCachedOrApi<T>(endpoint: string, maxAgeSeconds: number): Promise<T> {
     const cacheKey = "DiscordService__Cached__" + endpoint;
 
-    console.log(cacheKey);
 
     const cachedJson = sessionStorage.getItem(cacheKey);
     if (cachedJson) {
-      console.log("found");
       const cachedValue = JSON.parse(cachedJson);
-      console.log(cachedValue.retrieved);
-      console.log(new Date(new Date(cachedValue.retrieved).valueOf() + maxAgeSeconds * 1000));
-      console.log(new Date());
       if (cachedValue && new Date().valueOf() - new Date(cachedValue.retrieved).valueOf() < maxAgeSeconds * 1000) {
-        console.log("cached");
         return cachedValue.value;
-      } else {
-        console.log("old");
       }
-    } else {
-      console.log("no");
     }
 
     const result: T = await lastValueFrom(this.http.get<T>(endpoint));

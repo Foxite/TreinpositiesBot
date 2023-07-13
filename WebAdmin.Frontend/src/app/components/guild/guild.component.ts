@@ -29,7 +29,6 @@ export class GuildComponent implements OnInit {
 
   ngOnInit() {
     this.security.userObservable().subscribe(user => {
-      console.log("yo");
       this.updateGuild();
     });
 
@@ -48,10 +47,9 @@ export class GuildComponent implements OnInit {
     if (newGuildId == this.guildId) {
       return;
     }
-    console.log("updateGuild");
 
     this.guildId = newGuildId;
-    if (!this.guildId) {
+    if (!this.guildId || this.guildId == "0") {
       this.guild = null;
       return;
     }
@@ -77,10 +75,10 @@ export class GuildComponent implements OnInit {
   updateSelectedItem() {
     const newItemId = this.route.snapshot.params["channelId"];
 
-    if ((newItemId == null && this.itemConfig == null) || (newItemId == this.itemConfig?.id)) {
+    // If the new id and the current item's id are the same, accounting for the current item being null and the new id being unspecified
+    if (((!newItemId || newItemId == "0") && this.itemConfig == null) || newItemId == this.itemConfig?.id) {
       return;
     }
-    console.log("updateSelectedItem", newItemId, this.itemConfig?.id);
 
     if (!this.guildConfig) {
       return;
