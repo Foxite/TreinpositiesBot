@@ -11,6 +11,7 @@ export class ChannelConfigService {
 	constructor(private http: HttpClient) {
 	}
 
+  // todo catch 404s
   getGuild(id: string): Promise<GuildConfig> {
     if (id.endsWith("500")) {
       throw new Error("fug");
