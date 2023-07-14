@@ -31,8 +31,9 @@
   flex-direction: row;
 
   & .channelSelect {
-    flex-grow: 1;
+    flex-grow: 0;
     flex-shrink: 0;
+    width: 17em;
 
     & h4 {
       display: inline;
@@ -47,5 +48,6 @@
   }
 
   & .configForm {
+
   }
 }
