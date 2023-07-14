@@ -65,6 +65,10 @@ export class GuildComponent implements OnInit {
       .then(gc => {
         // TODO remove spinner
         this.guildConfig = gc;
+        if (this.guildConfig === null) {
+          // TODO show "bot is not in channel" error
+          console.log("gc is null");
+        }
       })
       .catch(error => {
         console.error(error);

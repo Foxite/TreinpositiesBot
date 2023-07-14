@@ -11,12 +11,24 @@ export class ChannelConfigService {
 	constructor(private http: HttpClient) {
 	}
 
-  // todo catch 404s
-  getGuild(id: string): Promise<GuildConfig> {
-    if (id.endsWith("500")) {
-      throw new Error("fug");
-    }
-    return lastValueFrom(this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`));
+  getGuild(id: string): Promise<GuildConfig | null> {
+    return new Promise((resolve, reject) => {
+      let lastValue: GuildConfig | null = null;
+      this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`).subscribe({
+        next: (value: GuildConfig) => {
+          console.log(value);
+          lastValue = value;
+        },
+        complete: () => resolve(lastValue),
+        error: (error: any) => {
+          if (error.status === 404) {
+            resolve(null);
+          } else {
+            reject(error);
+          }
+        }
+      });
+    });
   }
 
   setGuildCooldown(guildId: string, cooldownSeconds: number | null): Promise<void> {
