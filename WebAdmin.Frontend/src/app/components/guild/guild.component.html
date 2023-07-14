@@ -4,31 +4,36 @@
     <span class="name">{{guild.name}} <span class="id muted">({{guild.id}})</span></span>
   </h1>
 </div>
-<!-- TODO make channel list always the same (small) width -->
-<div *ngIf="guildConfig != null" class="guildConfig">
-  <div class="channelSelect">
-    <ol class="categories">
-      <!-- TODO list item for default guild settings -->
-      <li [routerLink]="['/guilds/', guildConfig.id, '0']">
-        <span class="name">Server-wide default</span>
-      </li>
-      <li *ngFor="let category of guildConfig?.categories">
-        <details open><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
-          <ol class="boxlist">
-            <!-- TODO selectable -->
-            <li *ngFor="let channel of category.channels" [routerLink]="['/guilds/', guildConfig.id, channel.id]">
-              <span class="name">{{channel.name}}</span>
-            </li>
-          </ol>
-        </details>
-      </li>
-    </ol>
-  </div>
+<div [ngSwitch]="displayState">
+  <div *ngSwitchCase="DisplayState.NoGuildSelected">Please select a server to the left.</div>
+  <div *ngSwitchCase="DisplayState.LoadingGuild">Loading channel configuration...</div>
+  <div *ngSwitchCase="DisplayState.BotNotInGuild">The bot is not in this server and cannot access the channel list.</div>
+  <div *ngSwitchCase="DisplayState.ErrorLoadingGuild">An unknown error has occurred while loading the channel configuration.</div>
+  <div *ngSwitchCase="DisplayState.GuildSelected" class="guildConfig">
+    <div class="channelSelect">
+      <ol class="categories">
+        <!-- TODO list item for default guild settings -->
+        <li [routerLink]="['/guilds/', guildConfig!.id, '0']">
+          <span class="name">Server-wide default</span>
+        </li>
+        <li *ngFor="let category of guildConfig!.categories">
+          <details open><summary><h4 class="name">{{category.name || "Uncategorized" }}</h4></summary>
+            <ol class="boxlist">
+              <!-- TODO selectable -->
+              <li *ngFor="let channel of category.channels" [routerLink]="['/guilds/', guildConfig!.id, channel.id]">
+                <span class="name">{{channel.name}}</span>
+              </li>
+            </ol>
+          </details>
+        </li>
+      </ol>
+    </div>
 
-  <div class="configForm">
-    <!-- TODO show configuration form -->
-    <div *ngIf="itemConfig">
-      {{JSON.stringify(itemConfig)}}
+    <div class="configForm">
+      <!-- TODO show configuration form -->
+      <div *ngIf="itemConfig">
+        {{JSON.stringify(itemConfig)}}
+      </div>
     </div>
   </div>
 </div>

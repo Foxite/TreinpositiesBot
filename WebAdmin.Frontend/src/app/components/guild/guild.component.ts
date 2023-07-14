@@ -14,8 +14,11 @@ export class GuildComponent implements OnInit {
   guildId!: string | null;
   guild!: GuildInfo | null;
   guildConfig!: GuildConfig | null;
+  displayState: DisplayState = DisplayState.NoGuildSelected;
 
   itemConfig!: (GuildConfig | GuildChannelConfig) | undefined;
+
+  protected readonly DisplayState = DisplayState;
 
   // For debugging only
   protected readonly JSON = JSON;
@@ -54,25 +57,26 @@ export class GuildComponent implements OnInit {
       return;
     }
 
-    if (!this.security.currentUser()) {
+    const currentUser = this.security.currentUser();
+    if (!currentUser) {
       return;
     }
 
-    this.guild = this.security.currentUser()!.guilds[this.guildId!];
+    this.guild = currentUser.guilds[this.guildId!];
+    this.displayState = DisplayState.LoadingGuild;
 
-    // TODO show spinner
     this.ccs.getGuild(this.guildId)
       .then(gc => {
-        // TODO remove spinner
         this.guildConfig = gc;
         if (this.guildConfig === null) {
-          // TODO show "bot is not in channel" error
-          console.log("gc is null");
+          this.displayState = DisplayState.BotNotInGuild;
+        } else {
+          this.displayState = DisplayState.GuildSelected;
         }
       })
       .catch(error => {
         console.error(error);
-        // TODO show error
+        this.displayState = DisplayState.BotNotInGuild;
       });
   }
 
@@ -80,7 +84,7 @@ export class GuildComponent implements OnInit {
     const newItemId = this.route.snapshot.params["channelId"];
 
     // If the new id and the current item's id are the same, accounting for the current item being null and the new id being unspecified
-    if (((!newItemId || newItemId == "0") && this.itemConfig == null) || newItemId == this.itemConfig?.id) {
+    if ((!newItemId && this.itemConfig == null) || newItemId == this.itemConfig?.id) {
       return;
     }
 
@@ -88,7 +92,7 @@ export class GuildComponent implements OnInit {
       return;
     }
 
-    if (newItemId === null) {
+    if (newItemId === "0") {
       this.itemConfig = this.guildConfig;
     } else {
       for (const category of this.guildConfig?.categories) {
@@ -99,4 +103,12 @@ export class GuildComponent implements OnInit {
       }
     }
   }
+}
+
+export enum DisplayState {
+  NoGuildSelected,
+  LoadingGuild,
+  ErrorLoadingGuild,
+  BotNotInGuild,
+  GuildSelected
 }

@@ -11,14 +11,13 @@ export class ChannelConfigService {
 	constructor(private http: HttpClient) {
 	}
 
-  getGuild(id: string): Promise<GuildConfig | null> {
+  async getGuild(id: string): Promise<GuildConfig | null> {
+    /*
     return new Promise((resolve, reject) => {
-      let lastValue: GuildConfig | null = null;
-      this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`).subscribe({
-        next: (value: GuildConfig) => {
-          console.log(value);
-          lastValue = value;
-        },
+    let lastValue: GuildConfig | null = null;
+
+      .subscribe({
+        next: (value: GuildConfig) => lastValue = value,
         complete: () => resolve(lastValue),
         error: (error: any) => {
           if (error.status === 404) {
@@ -29,6 +28,15 @@ export class ChannelConfigService {
         }
       });
     });
+    */
+    const result = await lastValueFrom(this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`, { observe: 'response' }));
+    if (result.status == 404) {
+      return null;
+    } else if (result.status == 200) {
+      return result.body;
+    } else {
+      throw new Error("Unsuccessful result: " + result.status);
+    }
   }
 
   setGuildCooldown(guildId: string, cooldownSeconds: number | null): Promise<void> {
