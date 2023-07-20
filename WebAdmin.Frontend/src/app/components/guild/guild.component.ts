@@ -12,6 +12,12 @@ import {FormControl, FormGroup} from "@angular/forms";
   styleUrls: ['./guild.component.scss']
 })
 export class GuildComponent implements OnInit {
+  readonly availableSourceNames = [
+    "Treinposities",
+    "Busposities",
+    "Planespotters"
+  ]
+
   guildId!: string | null;
   guild!: GuildInfo | null;
   guildConfig!: GuildConfig | null;
@@ -19,6 +25,7 @@ export class GuildComponent implements OnInit {
 
   itemConfig!: ItemConfig | undefined;
   itemDisplayName!: string;
+  // TODO populate with item config
   itemConfigForm = new FormGroup({
     specifyCooldown: new FormControl(false),
     cooldown: new FormControl(0),
@@ -76,6 +83,8 @@ export class GuildComponent implements OnInit {
 
     // TODO debounce
     const newConfig = this.buildItemConfigFromForm();
+    console.log(newConfig);
+    console.log(this.itemConfig);
     if (newConfig.cooldownSeconds !== this.itemConfig.cooldownSeconds) {
       if (this.route.snapshot.params["channelId"] === "0") {
         await this.ccs.setGuildCooldown(this.guildId, newConfig.cooldownSeconds);
@@ -84,7 +93,9 @@ export class GuildComponent implements OnInit {
       }
     }
 
-    if (!GuildComponent.arrayEquals(newConfig.sourceNames, this.itemConfig.sourceNames)) {
+    const doesEqual = !GuildComponent.arrayEquals(newConfig.sourceNames, this.itemConfig.sourceNames);
+    console.log(doesEqual);
+    if (doesEqual) {
       if (this.route.snapshot.params["channelId"] === "0") {
         await this.ccs.setGuildCooldown(this.guildId, newConfig.cooldownSeconds);
       } else {
@@ -117,6 +128,10 @@ export class GuildComponent implements OnInit {
 
     this.ccs.getGuild(this.guildId)
       .then(gc => {
+        if (this.guildId != newGuildId) {
+          // this.guildId was changed before this promise resolved.
+          return;
+        }
         this.guildConfig = gc;
         if (this.guildConfig === null) {
           this.displayState = DisplayState.BotNotInGuild;

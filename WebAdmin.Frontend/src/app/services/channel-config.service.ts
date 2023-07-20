@@ -27,7 +27,7 @@ export class ChannelConfigService {
   }
 
   setGuildSources(guildId: string, sources: string[] | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/Cooldown`, JSON.stringify(sources)));
+    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/Sources`, sources));
   }
 
   setChannelCooldown(guildId: string, channelId: string, cooldownSeconds: number | null): Promise<void> {
@@ -35,6 +35,6 @@ export class ChannelConfigService {
   }
 
   setChannelSources(guildId: string, channelId: string, sources: string[] | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/${channelId}/Cooldown`, JSON.stringify(sources)));
+    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/${channelId}/Sources`, sources));
   }
 }
