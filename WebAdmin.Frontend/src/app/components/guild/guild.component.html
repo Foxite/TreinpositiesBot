@@ -30,9 +30,33 @@
     </div>
 
     <div class="configForm">
-      <!-- TODO show configuration form -->
-      <div *ngIf="itemConfig">
-        {{JSON.stringify(itemConfig)}}
+      <div class="selectedItemTitle">
+        {{this.itemDisplayName}}
+      </div>
+      <div *ngIf="itemConfig" [formGroup]="itemConfigForm" (input)="onFormInput()">
+        <!--{{JSON.stringify(itemConfig)}}-->
+        <form>
+          <table>
+            <tbody>
+            <tr>
+                <td>Cooldown:</td>
+                <td><input type="checkbox" formControlName="specifyCooldown"></td>
+                <td><input type="number" formControlName="cooldown"> seconds</td>
+            </tr>
+            <tr>
+                <td>Sources:</td>
+                <td><input type="checkbox" formControlName="specifySources"></td>
+                <td>
+                  <select multiple="multiple" formControlName="sources">
+                    <option name="test1">Test item 1</option>
+                    <option name="test2">Test item 2</option>
+                    <option name="test3">Test item 3</option>
+                  </select>
+                </td>
+            </tr>
+            </tbody>
+          </table>
+        </form>
       </div>
     </div>
   </div>

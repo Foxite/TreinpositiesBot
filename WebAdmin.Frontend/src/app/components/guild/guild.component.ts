@@ -1,9 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {GuildChannelConfig, GuildConfig, GuildInfo} from "../../models/models";
+import {GuildConfig, GuildInfo, ItemConfig} from "../../models/models";
 import {ChannelConfigService} from "../../services/channel-config.service";
-import {ActivatedRoute, EventType, Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {SecurityService} from "../../services/security/security.service";
 import {DiscordService} from "../../services/discord/discord.service";
+import {FormControl, FormGroup} from "@angular/forms";
 
 @Component({
   selector: 'app-guild',
@@ -16,7 +17,14 @@ export class GuildComponent implements OnInit {
   guildConfig!: GuildConfig | null;
   displayState: DisplayState = DisplayState.NoGuildSelected;
 
-  itemConfig!: (GuildConfig | GuildChannelConfig) | undefined;
+  itemConfig!: ItemConfig | undefined;
+  itemDisplayName!: string;
+  itemConfigForm = new FormGroup({
+    specifyCooldown: new FormControl(false),
+    cooldown: new FormControl(0),
+    specifySources: new FormControl(false),
+    sources: new FormControl([]),
+  });
 
   protected readonly DisplayState = DisplayState;
 
@@ -27,8 +35,8 @@ export class GuildComponent implements OnInit {
               private security: SecurityService,
               private discord: DiscordService,
               private router: Router,
-              private route: ActivatedRoute) {
-  }
+              private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
     this.security.userObservable().subscribe(user => {
@@ -44,7 +52,49 @@ export class GuildComponent implements OnInit {
     this.updateSelectedItem();
   }
 
+  private buildItemConfigFromForm(): { cooldownSeconds: number | null, sourceNames: string[] | null } {
+    return {
+      cooldownSeconds: this.itemConfigForm.get("specifyCooldown")!.value === false ? null : this.itemConfigForm.get("cooldown")!.value,
+      sourceNames: this.itemConfigForm.get("specifySources")!.value === false ? null : this.itemConfigForm.get("sources")!.value,
+    };
+  }
+
+  static arrayEquals<T>(a: T[] | null, b: T[] | null): boolean {
+    return (a == null && b == null) || (a != null && b != null && a.length === b.length && a.every((val, index) => val === b[index]));
+  }
+
+  async onFormInput(): Promise<void> {
+    if (!this.itemConfig) {
+      console.error("Called onFormInput while itemConfig is undefined");
+      return;
+    }
+
+    if (!this.guildId) {
+      console.error("Called onFormInput while guildId is undefined");
+      return;
+    }
+
+    // TODO debounce
+    const newConfig = this.buildItemConfigFromForm();
+    if (newConfig.cooldownSeconds !== this.itemConfig.cooldownSeconds) {
+      if (this.route.snapshot.params["channelId"] === "0") {
+        await this.ccs.setGuildCooldown(this.guildId, newConfig.cooldownSeconds);
+      } else {
+        await this.ccs.setChannelCooldown(this.guildId, this.route.snapshot.params["channelId"], newConfig.cooldownSeconds);
+      }
+    }
+
+    if (!GuildComponent.arrayEquals(newConfig.sourceNames, this.itemConfig.sourceNames)) {
+      if (this.route.snapshot.params["channelId"] === "0") {
+        await this.ccs.setGuildCooldown(this.guildId, newConfig.cooldownSeconds);
+      } else {
+        await this.ccs.setChannelSources(this.guildId, this.route.snapshot.params["channelId"], newConfig.sourceNames);
+      }
+    }
+  }
+
   updateGuild() {
+    // TODO use component input parameter
     const newGuildId = this.route.snapshot.params["guildId"];
 
     if (newGuildId == this.guildId) {
@@ -72,6 +122,7 @@ export class GuildComponent implements OnInit {
           this.displayState = DisplayState.BotNotInGuild;
         } else {
           this.displayState = DisplayState.GuildSelected;
+          this.updateSelectedItem();
         }
       })
       .catch(error => {
@@ -94,10 +145,13 @@ export class GuildComponent implements OnInit {
 
     if (newItemId === "0") {
       this.itemConfig = this.guildConfig;
+      this.itemDisplayName = this.guild!.name + " server-wide configuration";
     } else {
       for (const category of this.guildConfig?.categories) {
-        this.itemConfig = category.channels.find(channel => channel.id == newItemId);
-        if (this.itemConfig != null) {
+        const channel = category.channels.find(channel => channel.id == newItemId);
+        if (channel != null) {
+          this.itemConfig = channel;
+          this.itemDisplayName = this.guild!.name + " / #" + channel.name + " configuration";
           return;
         }
       }

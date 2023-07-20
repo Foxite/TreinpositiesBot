@@ -4,10 +4,15 @@ export interface GuildInfo {
   iconUrl: string | null;
 }
 
-export interface GuildConfig {
+export interface ItemConfig {
+  itemType: "channel" | "guild";
   id: string;
   cooldownSeconds: number | null;
   sourceNames: string[] | null;
+}
+
+export interface GuildConfig extends ItemConfig {
+  itemType: "guild";
   categories: GuildChannelCategory[];
 }
 
@@ -17,10 +22,8 @@ export interface GuildChannelCategory {
   channels: GuildChannelConfig[];
 }
 
-export interface GuildChannelConfig {
-  id: string;
+export interface GuildChannelConfig extends ItemConfig {
+  itemType: "channel";
   name: string;
   type: string;
-  cooldownSeconds: number | null;
-  sourceNames: string[] | null;
 }

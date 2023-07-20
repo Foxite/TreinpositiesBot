@@ -27,6 +27,8 @@ export class GuildsComponent implements OnInit {
       }
     });
 
+    this.currentGuildId = this.activatedRoute.snapshot.params['guildId'];
+
     const currentUser = this.security.currentUser();
     if (currentUser) {
       this.updateGuilds(currentUser);

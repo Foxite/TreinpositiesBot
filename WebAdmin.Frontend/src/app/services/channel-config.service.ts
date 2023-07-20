@@ -12,23 +12,6 @@ export class ChannelConfigService {
 	}
 
   async getGuild(id: string): Promise<GuildConfig | null> {
-    /*
-    return new Promise((resolve, reject) => {
-    let lastValue: GuildConfig | null = null;
-
-      .subscribe({
-        next: (value: GuildConfig) => lastValue = value,
-        complete: () => resolve(lastValue),
-        error: (error: any) => {
-          if (error.status === 404) {
-            resolve(null);
-          } else {
-            reject(error);
-          }
-        }
-      });
-    });
-    */
     const result = await lastValueFrom(this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`, { observe: 'response' }));
     if (result.status == 404) {
       return null;
