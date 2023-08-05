@@ -28,6 +28,9 @@
     
     <ItemGroup>
       <None Update="appsettings.local.json.example">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <None Include="appsettings.local.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
