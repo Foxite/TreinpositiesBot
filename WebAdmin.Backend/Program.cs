@@ -1,7 +1,8 @@
 using Discord;
 using Discord.Rest;
-using Microsoft.EntityFrameworkCore;
-using WebAdmin.Backend.Entities;
+using Microsoft.Extensions.Options;
+using StackExchange.Redis;
+using WebAdmin.Backend.Config;
  
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.local.json", true);
@@ -13,16 +14,25 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(dbcob => dbcob.UseNpgsql(builder.Configuration.GetValue<string>("Database")));
+builder.Services.Configure<RedisConfig>(builder.Configuration.GetSection("Redis"));
+
+builder.Services.AddSingleton(isp => {
+	IList<string> endpoints = isp.GetRequiredService<IOptions<RedisConfig>>().Value.Endpoints;
+
+	var connectionOptions = new ConfigurationOptions();
+	foreach (string endpoint in endpoints) {
+		connectionOptions.EndPoints.Add(endpoint);
+	}
+	
+	return ConnectionMultiplexer.Connect(connectionOptions);
+});
 
 builder.Services.AddSingleton<DiscordRestClient>();
 
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope()) {
-	await using var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	await dbContext.Database.MigrateAsync();
-}
+var connectionMultiplexer = app.Services.GetRequiredService<ConnectionMultiplexer>();
+Console.WriteLine(await connectionMultiplexer.GetDatabase().PingAsync());
 
 var discord = app.Services.GetRequiredService<DiscordRestClient>();
 await discord.LoginAsync(TokenType.Bot, app.Services.GetRequiredService<IConfiguration>().GetValue<string>("DiscordToken"));
