@@ -95,7 +95,7 @@ public class ChannelConfigController : ControllerBase {
 
 	[HttpPut]
 	[Route("{guildId:long}/{channelId:long}/Cooldown")]
-	public async Task<IActionResult> SetChannelCooldown([FromRoute] ulong guildId, [FromRoute] ulong channelId, [FromBody] float cooldownSeconds) {
+	public async Task<IActionResult> SetChannelCooldown([FromRoute] ulong guildId, [FromRoute] ulong channelId, [FromBody] float? cooldownSeconds) {
 		Channel? channel = m_DbContext.Channels.FirstOrDefault(channel => channel.GuildId == guildId && channel.Id == channelId);
 		if (channel == null) {
 			channel = new Channel() {
@@ -116,7 +116,7 @@ public class ChannelConfigController : ControllerBase {
 
 	[HttpPut]
 	[Route("{guildId:long}/{channelId:long}/Sources")]
-	public async Task<IActionResult> SetChannelSources([FromRoute] ulong guildId, [FromRoute] ulong channelId, [FromBody] string[] sources) {
+	public async Task<IActionResult> SetChannelSources([FromRoute] ulong guildId, [FromRoute] ulong channelId, [FromBody] string[]? sources) {
 		Channel? channel = m_DbContext.Channels.FirstOrDefault(channel => channel.GuildId == guildId && channel.Id == channelId);
 		if (channel == null) {
 			channel = new Channel() {
@@ -137,7 +137,7 @@ public class ChannelConfigController : ControllerBase {
 
 	[HttpPut]
 	[Route("{guildId:long}/Cooldown")]
-	public async Task<IActionResult> SetGuildCooldown([FromRoute] ulong guildId, [FromBody] float cooldownSeconds) {
+	public async Task<IActionResult> SetGuildCooldown([FromRoute] ulong guildId, [FromBody] float? cooldownSeconds) {
 		Guild? guild = await m_DbContext.Guilds.FindAsync(guildId);
 		if (guild == null) {
 			guild = new Guild() {
@@ -157,7 +157,7 @@ public class ChannelConfigController : ControllerBase {
 
 	[HttpPut]
 	[Route("{guildId:long}/Sources")]
-	public async Task<IActionResult> SetGuildCooldown([FromRoute] ulong guildId, [FromBody] string[] sources) {
+	public async Task<IActionResult> SetGuildCooldown([FromRoute] ulong guildId, [FromBody] string[]? sources) {
 		Guild? guild = await m_DbContext.Guilds.FindAsync(guildId);
 		if (guild == null) {
 			guild = new Guild() {
