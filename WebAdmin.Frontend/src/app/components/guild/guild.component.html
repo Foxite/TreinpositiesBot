@@ -33,22 +33,26 @@
       <div class="selectedItemTitle">
         {{this.itemDisplayName}}
       </div>
-      <div *ngIf="itemConfig" [formGroup]="itemConfigForm" (input)="onFormInput()">
+      <div *ngIf="itemConfig" (input)="onFormInput()">
         <!--{{JSON.stringify(itemConfig)}}-->
         <form>
           <table>
             <tbody>
             <tr>
                 <td>Cooldown:</td>
-                <td><input type="checkbox" formControlName="specifyCooldown" [attr.checked]="itemConfig.cooldownSeconds != null ? 'checked' : null"></td>
-                <td><input type="number" formControlName="cooldown" value="{{itemConfig.cooldownSeconds}}"> seconds</td>
+                <td><input type="checkbox" [(ngModel)]="itemConfigForm.specifyCooldown" name="specifyCooldown"></td>
+                <td><input type="number" [(ngModel)]="itemConfigForm.cooldown" name="cooldown"> seconds</td>
             </tr>
             <tr>
                 <td>Sources:</td>
-                <td><input type="checkbox" formControlName="specifySources" [attr.checked]="itemConfig.sourceNames != null ? 'checked' : null"></td>
+                <td><input type="checkbox" [(ngModel)]="itemConfigForm.specifySources" name="specifySources"></td>
                 <td>
-                  <select multiple="multiple" formControlName="sources">
-                    <option *ngFor="let sourceName of this.availableSourceNames" value="{{sourceName}}" [attr.selected]="(itemConfig.sourceNames || guildConfig!.sourceNames || this.availableSourceNames).includes(sourceName)">{{sourceName}}</option>
+                  <select multiple="multiple" [(ngModel)]="itemConfigForm.sources" name="sources">
+                    <option
+                      *ngFor="let sourceName of this.availableSourceNames"
+                      value="{{sourceName}}"
+                      [attr.selected]="(itemConfig.sourceNames || guildConfig!.sourceNames || this.availableSourceNames).includes(sourceName)"
+                    >{{sourceName}}</option>
                   </select>
                 </td>
             </tr>

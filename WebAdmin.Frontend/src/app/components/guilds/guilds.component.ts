@@ -29,12 +29,12 @@ export class GuildsComponent implements OnInit {
 
     this.currentGuildId = this.activatedRoute.snapshot.params['guildId'];
 
-    const currentUser = this.security.currentUser();
+    const currentUser = this.security.currentUser;
     if (currentUser) {
       this.updateGuilds(currentUser);
     }
 
-    this.security.userObservable().subscribe(user => {
+    this.security.userObservable.subscribe(user => {
       if (user) {
         this.updateGuilds(user);
       }

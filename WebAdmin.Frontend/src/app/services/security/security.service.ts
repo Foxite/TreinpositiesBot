@@ -42,17 +42,17 @@ export class SecurityService {
     this.oauthService.logOut();
   }
 
-  public currentUser(): User | null {
+  public get currentUser(): User | null {
     return this.user;
   }
 
-  public userObservable(): Observable<User | null> {
+  public get userObservable(): Observable<User | null> {
     return this.userSubject;
   }
 
   public readyToAuthorize(): Promise<void> {
     return new Promise((res, rej) => {
-      this.userObservable().subscribe(user => {
+      this.userObservable.subscribe(user => {
         if (user) {
           res();
         } else {

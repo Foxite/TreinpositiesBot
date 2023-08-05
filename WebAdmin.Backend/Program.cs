@@ -2,7 +2,7 @@ using Discord;
 using Discord.Rest;
 using Microsoft.EntityFrameworkCore;
 using WebAdmin.Backend.Entities;
-
+ 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.local.json", true);
 
