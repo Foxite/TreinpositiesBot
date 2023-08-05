@@ -18,7 +18,7 @@ var host = Host.CreateDefaultBuilder()
 	.ConfigureAppConfiguration((hbc, icb) => {
 		icb.AddJsonFile("appsettings.json");
 		icb.AddJsonFile($"appsettings.{hbc.HostingEnvironment.EnvironmentName}.json", true);
-		icb.AddJsonFile($"appsettings.local.json", true);
+		icb.AddJsonFile("appsettings.local.json", true);
 		icb.AddEnvironmentVariables();
 		icb.AddCommandLine(args);
 	})
