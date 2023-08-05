@@ -35,7 +35,11 @@ if (app.Environment.IsDevelopment()) {
 
 string[]? allowedCorsOrigins = app.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>();
 if (allowedCorsOrigins != null) {
-	app.UseCors(cpb => cpb.WithOrigins(allowedCorsOrigins));
+	app.UseCors(cpb => cpb
+		.WithOrigins(allowedCorsOrigins)
+		.AllowAnyMethod()
+		.AllowAnyHeader()
+	);
 }
 
 app.UseAuthorization();
