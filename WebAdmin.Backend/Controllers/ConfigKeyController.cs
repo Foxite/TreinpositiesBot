@@ -45,6 +45,7 @@ public class ConfigKeyController : ControllerBase {
 		return NotFound();
 	}
 	
+	/* Not needed anymore.
 	[HttpGet("{overrideLevel}/{key}")]
 	public async Task<IActionResult> GetAllConfigKeys([FromRoute] string overrideLevel) {
 		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
@@ -80,34 +81,15 @@ public class ConfigKeyController : ControllerBase {
 		}
 
 		return Ok(configKeys);
-	}
+	}*/
 
 	[HttpPut("{overrideLevel}/{key}")]
-	public async Task<IActionResult> PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
+	public Task<IActionResult> PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
 		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
 		
 		// TODO: better validation of override level.
 		// TODO: access controls.
 		database.StringSet(new RedisKey(overrideLevel + "/" + key), new RedisValue(key));
-		return NoContent();
-	}
-}
-
-public record GetConfigKeyDto(
-	string OverrideLevel,
-	string Value
-);
-
-
-public static class StringUtil {
-	public static IEnumerable<int> IndicesOf(this string haystack, string needle, StringComparison stringComparison = StringComparison.Ordinal) {
-		int lastPosition = 0;
-		while (true) {
-			lastPosition = haystack.IndexOf(needle, lastPosition, stringComparison);
-			if (lastPosition == -1) {
-				yield break;
-			}
-			yield return lastPosition;
-		}
+		return Task.FromResult<IActionResult>(NoContent());
 	}
 }

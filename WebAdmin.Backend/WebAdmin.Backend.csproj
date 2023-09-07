@@ -8,8 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!--<PackageReference Include="DSharpPlus.Rest" Version="4.4.2" />-->
-        <PackageReference Include="Discord.Net.Rest" Version="3.11.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
         <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
@@ -22,9 +20,6 @@
     </ItemGroup>
     
     <ItemGroup>
-      <None Update="appsettings.local.json.example">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </None>
       <None Include="appsettings.local.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>

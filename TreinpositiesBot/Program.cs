@@ -60,7 +60,7 @@ var host = Host.CreateDefaultBuilder()
 		if (string.IsNullOrWhiteSpace(hbc.Configuration.GetSection("Core").GetValue<string>("AdminBackendUrl"))) {
 			isc.AddSingleton<ChannelConfigService, ConfigChannelConfigService>();
 		} else {
-			isc.AddSingleton<ChannelConfigService, AdminBackendChannelConfigService>();
+			isc.AddSingleton<ChannelConfigService, WebAdminChannelConfigService>();
 		}
 	})
 	.Build();

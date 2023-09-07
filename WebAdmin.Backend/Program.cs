@@ -1,5 +1,3 @@
-using Discord;
-using Discord.Rest;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using WebAdmin.Backend.Config;
@@ -27,15 +25,10 @@ builder.Services.AddSingleton(isp => {
 	return ConnectionMultiplexer.Connect(connectionOptions);
 });
 
-builder.Services.AddSingleton<DiscordRestClient>();
-
 var app = builder.Build();
 
 var connectionMultiplexer = app.Services.GetRequiredService<ConnectionMultiplexer>();
 Console.WriteLine(await connectionMultiplexer.GetDatabase().PingAsync());
-
-var discord = app.Services.GetRequiredService<DiscordRestClient>();
-await discord.LoginAsync(TokenType.Bot, app.Services.GetRequiredService<IConfiguration>().GetValue<string>("DiscordToken"));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
