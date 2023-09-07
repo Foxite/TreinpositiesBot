@@ -1,0 +1,13 @@
+<nav class="rootLevelSelect">
+  <ol class="boxlist">
+    <li *ngFor="let rootLevel of rootLevels"
+        class="rootLevelInfoItem {{ rootLevel.id == currentRootLevelId ? 'active' : 'inactive' }}"
+        [routerLink]="['/config', { level: rootLevel.id }]"
+    >
+      <span class="icon">
+        <img alt="{{rootLevel.name}} icon" src="{{rootLevel.iconUrl}}" />
+      </span>
+      <span class="name">{{rootLevel.name}}</span>
+    </li>
+  </ol>
+</nav>

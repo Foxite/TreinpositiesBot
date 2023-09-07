@@ -1,6 +1,6 @@
-import {GuildInfo} from "../../models/models";
+import {RootLevelInfo} from "../../models/models";
 
 export interface User {
 	name: string;
-  guilds: Record<string, GuildInfo>;
+  rootLevels: Record<string, RootLevelInfo>;
 }

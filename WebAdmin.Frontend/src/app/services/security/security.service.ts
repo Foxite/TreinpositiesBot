@@ -5,7 +5,7 @@ import {Injectable} from "@angular/core";
 import {OAuthService} from "angular-oauth2-oidc";
 import {DiscordService} from "../discord/discord.service";
 import {authCodeFlowConfig} from "../../../environments/environment";
-import {GuildInfo} from "../../models/models";
+import {LevelInfo, RootLevelInfo} from "../../models/models";
 
 @Injectable()
 export class SecurityService {
@@ -72,7 +72,7 @@ export class SecurityService {
   private async updateCurrentUser(): Promise<void> {
     const currentAuth = await this.discordService.getCurrentAuthorization();
     const guilds = await this.discordService.getCurrentUserGuilds();
-    const guildInfos: Record<string, GuildInfo> = {};
+    const rootLevels: Record<string, RootLevelInfo> = {};
     for (const guild of guilds) {
       const manageGuild = (1 << 5);
       const admin = (1 << 3);
@@ -83,7 +83,7 @@ export class SecurityService {
       }
 
       const guildId = guild.id;
-      guildInfos[guildId] = {
+      rootLevels[guildId] = {
         id: guildId,
         name: guild.name,
         iconUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
@@ -92,7 +92,7 @@ export class SecurityService {
 
     this.user = {
       name: currentAuth.user.global_name,
-      guilds: guildInfos
+      rootLevels: rootLevels
     };
 
     this.userSubject.next(this.user);

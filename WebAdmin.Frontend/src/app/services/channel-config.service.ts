@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {GuildConfig} from "../models/models";
-import {lastValueFrom, Observable} from "rxjs";
+import {LevelInfo} from "../models/models";
+import {lastValueFrom} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 
@@ -11,30 +11,22 @@ export class ChannelConfigService {
 	constructor(private http: HttpClient) {
 	}
 
-  async getGuild(id: string): Promise<GuildConfig | null> {
-    const result = await lastValueFrom(this.http.get<GuildConfig>(`${environment.apiUrl}/ChannelConfig/${id}`, { observe: 'response' }));
-    if (result.status == 404) {
-      return null;
-    } else if (result.status == 200) {
-      return result.body;
-    } else {
-      throw new Error("Unsuccessful result: " + result.status);
+  private getLevelString(level: LevelInfo): string {
+    let levelStack = [ level.id ]; // todo use actual stack?
+
+    while (level.parent) {
+      level = level.parent
+      levelStack = [ level.id, ...levelStack ];
     }
+
+    return levelStack.join(":");
   }
 
-  setGuildCooldown(guildId: string, cooldownSeconds: number | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/Cooldown`, cooldownSeconds));
+  getConfigKey<T>(level: LevelInfo, key: string): Promise<T> {
+    return lastValueFrom<T>(this.http.get<T>(`${environment.apiUrl}/ChannelConfig/${this.getLevelString(level)}/${key}`))
   }
 
-  setGuildSources(guildId: string, sources: string[] | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/Sources`, sources));
-  }
-
-  setChannelCooldown(guildId: string, channelId: string, cooldownSeconds: number | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/${channelId}/Cooldown`, cooldownSeconds));
-  }
-
-  setChannelSources(guildId: string, channelId: string, sources: string[] | null): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${guildId}/${channelId}/Sources`, sources));
+  setConfigKey<T>(level: LevelInfo, key: string, value: string): Promise<void> {
+    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${this.getLevelString(level)}/${key}`, value));
   }
 }

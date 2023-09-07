@@ -1,29 +1,12 @@
-export interface GuildInfo {
+// These properties are used in situations where we only want to know about the root level and we don't care about its children.
+// LevelInfo is used when we do care. Note that objects returned as RootLevelInfo usually don't have a children property.
+export interface RootLevelInfo {
   id: string;
   name: string;
   iconUrl: string | null;
 }
 
-export interface ItemConfig {
-  itemType: "channel" | "guild";
-  id: string;
-  cooldownSeconds: number | null;
-  sourceNames: string[] | null;
-}
-
-export interface GuildConfig extends ItemConfig {
-  itemType: "guild";
-  categories: GuildChannelCategory[];
-}
-
-export interface GuildChannelCategory {
-  id: string | null;
-  name: string | null;
-  channels: GuildChannelConfig[];
-}
-
-export interface GuildChannelConfig extends ItemConfig {
-  itemType: "channel";
-  name: string;
-  type: string;
+export interface LevelInfo extends RootLevelInfo {
+  parent?: LevelInfo;
+  children: LevelInfo[];
 }

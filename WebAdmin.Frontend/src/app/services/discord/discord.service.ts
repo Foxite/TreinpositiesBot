@@ -15,7 +15,6 @@ export class DiscordService {
   private async getCachedOrApi<T>(endpoint: string, maxAgeSeconds: number): Promise<T> {
     const cacheKey = "DiscordService__Cached__" + endpoint;
 
-
     const cachedJson = sessionStorage.getItem(cacheKey);
     if (cachedJson) {
       const cachedValue = JSON.parse(cachedJson);

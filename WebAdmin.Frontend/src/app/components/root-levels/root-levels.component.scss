@@ -1,0 +1,34 @@
+.rootLevelSelect {
+  width: 7.5cm;
+
+  & ol {
+    margin-right: 1em;
+
+    & > li {
+      display: flex;
+      flex-direction: row;
+      padding: 0.2em;
+
+      & .icon {
+        width: 1cm;
+        height: 1cm;
+        margin-right: 0.5em;
+
+        & img {
+          width: auto;
+          height: auto;
+          max-width: 1cm;
+          max-height: 1cm;
+        }
+      }
+
+      & .name {
+        /* TODO: fix text alignment is slightly off */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-content: center;
+      }
+    }
+  }
+}

@@ -19,10 +19,4 @@
       </Content>
     </ItemGroup>
     
-    <ItemGroup>
-      <None Include="appsettings.local.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>
