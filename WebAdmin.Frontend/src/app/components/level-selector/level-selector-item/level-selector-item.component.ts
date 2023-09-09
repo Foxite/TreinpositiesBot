@@ -23,13 +23,11 @@ export class LevelSelectorItemComponent implements OnInit {
   }
 
   onClick(event: MouseEvent) {
-    console.log("self selected ", this.myLevel);
     this.selected.emit(this.myLevel);
     event.stopPropagation();
   }
 
   onChildSelected(level: LevelInfo) {
-    console.log("child selected ", this.myLevel);
     this.selected.emit(level);
   }
 }

@@ -85,7 +85,6 @@ export class LevelSelectorComponent implements OnInit, OnChanges {
   }
 
   onLevelSelected(level: LevelInfo) {
-    console.log("level selected", level);
     this.selected.emit(level);
     this.currentLevel = level;
   }
