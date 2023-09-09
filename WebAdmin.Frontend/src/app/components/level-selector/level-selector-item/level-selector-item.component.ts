@@ -14,7 +14,6 @@ export class LevelSelectorItemComponent implements OnInit {
   children!: LevelInfo[];
 
   ngOnInit() {
-    console.log(this.myLevel);
     if (this.myLevel.children) {
       this.children = Object.values(this.myLevel.children);
     } else {
@@ -23,8 +22,13 @@ export class LevelSelectorItemComponent implements OnInit {
   }
 
   onClick(event: MouseEvent) {
-    this.selected.emit(this.myLevel);
     event.stopPropagation();
+
+    if (this.currentLevel == this.myLevel) {
+      return;
+    }
+
+    this.selected.emit(this.myLevel);
   }
 
   onChildSelected(level: LevelInfo) {

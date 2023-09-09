@@ -1,8 +1,8 @@
-<span (click)="onClick($event)">
+<div class="item" (click)="onClick($event)">
   <strong>{{myLevel.name}}</strong> <span *ngIf="currentLevel == myLevel">(selected)</span>
   <ul>
     <li *ngFor="let child of children">
       <app-level-selector-item [myLevel]="child" (selected)="onChildSelected($event)" [currentLevel]="currentLevel"></app-level-selector-item>
     </li>
   </ul>
-</span>
+</div>

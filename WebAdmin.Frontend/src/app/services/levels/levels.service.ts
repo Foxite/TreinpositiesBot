@@ -61,8 +61,6 @@ export class MockLevelService extends LevelsService {
     for (const levelRoot in this.levelRoots) {
       setupTree(undefined, this.levelRoots[levelRoot]);
     }
-
-    console.log(this.levelRoots);
   }
 
   getLevelTree(rootLevelId: string): Promise<LevelInfo | null> {

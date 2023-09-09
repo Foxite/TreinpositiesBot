@@ -7,6 +7,7 @@ import {LevelInfo} from "../../models/models";
   styleUrls: ['./config-form.component.scss']
 })
 export class ConfigFormComponent {
-  @Output() currentLevel!: LevelInfo;
+  @Input() level: LevelInfo | null = null;
+
   protected readonly JSON = JSON;
 }
