@@ -9,7 +9,6 @@ export class ConfigPanelComponent {
   currentRootLevelId: string | null = null;
 
   onSelectRootLevel(rootLevelId: string) {
-    console.log(rootLevelId);
     this.currentRootLevelId = rootLevelId;
   }
 }

@@ -1,24 +1,22 @@
-<h2>Level selector</h2>
-
-<div *ngIf="currentLevel">
-  <h3>Current level</h3>
-  {{ JSON.stringify(currentLevel.id) }} {{ JSON.stringify(currentLevel.id) }}
+<div *ngIf="displayState == DisplayState.NoRootLevelSelected; else guildSelected">
+  <h2>Level selector</h2>
+  Please select a server to the left.
 </div>
 
-
-<div [ngSwitch]="displayState">
-  <div *ngSwitchCase="DisplayState.NoGuildSelected">Please select a server to the left.</div>
-  <div *ngSwitchCase="DisplayState.LoadingGuild">Loading channel configuration...</div>
-  <div *ngSwitchCase="DisplayState.BotNotInGuild">The bot is not in this server and cannot access the channel list.</div>
-  <div *ngSwitchCase="DisplayState.ErrorLoadingGuild">An unknown error has occurred while loading the channel configuration.</div>
-  <div *ngSwitchCase="DisplayState.GuildSelected">
-    You'll see the tree of LevelInfos here.
-
-    <div *ngIf="levelRoot">
-      <h3>Level root</h3>
-      <pre>
-        {{ JSON.stringify(levelRoot) }}
-      </pre>
+<ng-template #guildSelected>
+  <h2>{{rootLevel?.name}}</h2>
+  <div [ngSwitch]="displayState">
+    <div *ngSwitchCase="DisplayState.LoadingLevelRoot">Loading channel configuration...</div>
+    <div *ngSwitchCase="DisplayState.LevelRootNotAvailable">The bot is not in this server and cannot access the channel list.</div>
+    <div *ngSwitchCase="DisplayState.ErrorLoadingLevelRoot">An unknown error has occurred while loading the channel configuration.</div>
+    <div *ngSwitchCase="DisplayState.LevelRootLoaded">
+      <div *ngIf="levelRoot; else errorState">
+        <app-level-selector-item [myLevel]="levelRoot" [currentLevel]="currentLevel" (selected)="onLevelSelected($event)"></app-level-selector-item>
+      </div>
     </div>
   </div>
-</div>
+</ng-template>
+
+<ng-template #errorState>
+  If you see this you are eligible to receive a free mars bar
+</ng-template>

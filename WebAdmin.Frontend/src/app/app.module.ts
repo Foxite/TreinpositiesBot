@@ -11,6 +11,8 @@ import {ConfigPanelComponent} from './pages/config-panel/config-panel.component'
 import {LevelSelectorComponent} from './components/level-selector/level-selector.component';
 import {ConfigFormComponent} from './components/config-form/config-form.component';
 import {RootLevelsComponent} from "./components/root-levels/root-levels.component";
+import {LevelsService, MockLevelService} from "./services/levels/levels.service";
+import { LevelSelectorItemComponent } from './components/level-selector/level-selector-item/level-selector-item.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +21,7 @@ import {RootLevelsComponent} from "./components/root-levels/root-levels.componen
     LevelSelectorComponent,
     ConfigFormComponent,
     ConfigPanelComponent,
+    LevelSelectorItemComponent,
   ],
   imports: [
     SecurityModule,
@@ -30,7 +33,8 @@ import {RootLevelsComponent} from "./components/root-levels/root-levels.componen
     FormsModule,
   ],
   providers: [
-    DiscordService
+    DiscordService,
+    { provide: LevelsService, useClass: MockLevelService },
   ],
   bootstrap: [AppComponent]
 })

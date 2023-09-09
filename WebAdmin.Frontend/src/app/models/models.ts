@@ -3,10 +3,10 @@
 export interface RootLevelInfo {
   id: string;
   name: string;
-  iconUrl: string | null;
+  iconUrl?: string;
 }
 
 export interface LevelInfo extends RootLevelInfo {
   parent?: LevelInfo;
-  children: LevelInfo[];
+  children?: Record<string, LevelInfo>;
 }

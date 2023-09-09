@@ -86,7 +86,7 @@ export class SecurityService {
       rootLevels[guildId] = {
         id: guildId,
         name: guild.name,
-        iconUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
+        iconUrl: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : undefined,
       };
     }
 
