@@ -1,6 +1,8 @@
+using System.Text.Json.Nodes;
+
 namespace WebAdmin.Backend.Controllers;
 
 public record GetConfigKeyDto(
 	string OverrideLevel,
-	string Value
+	JsonNode? Value
 );

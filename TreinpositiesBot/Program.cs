@@ -61,6 +61,7 @@ var host = Host.CreateDefaultBuilder()
 			isc.AddSingleton<ChannelConfigService, ConfigChannelConfigService>();
 		} else {
 			isc.AddSingleton<ChannelConfigService, WebAdminChannelConfigService>();
+			isc.AddSingleton<WebAdminService>();
 		}
 	})
 	.Build();

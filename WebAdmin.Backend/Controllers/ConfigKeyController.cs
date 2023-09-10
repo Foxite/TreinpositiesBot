@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -38,7 +39,7 @@ public class ConfigKeyController : ControllerBase {
 			}
 			RedisValue result = await database.StringGetAsync(new RedisKey(level + "/" + key));
 			if (result != RedisValue.Null) {
-				return Ok(new GetConfigKeyDto(level, result.ToString()));
+				return Ok(new GetConfigKeyDto(level, JsonNode.Parse(result.ToString())));
 			}
 		}
 		
@@ -84,12 +85,13 @@ public class ConfigKeyController : ControllerBase {
 	}*/
 
 	[HttpPut("{overrideLevel}/{key}")]
-	public Task<IActionResult> PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
+	//[Consumes("text/plain")]
+	public Task<IActionResult> PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key, [FromBody] JsonValue value) {
 		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
 		
 		// TODO: better validation of override level.
 		// TODO: access controls.
-		database.StringSet(new RedisKey(overrideLevel + "/" + key), new RedisValue(key));
+		database.StringSet(new RedisKey(overrideLevel + "/" + key), new RedisValue(value.ToJsonString()));
 		return Task.FromResult<IActionResult>(NoContent());
 	}
 }

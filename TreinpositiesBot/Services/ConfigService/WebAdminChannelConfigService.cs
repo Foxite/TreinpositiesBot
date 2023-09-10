@@ -13,8 +13,16 @@ public class WebAdminChannelConfigService : ChannelConfigService {
 		m_WebAdminService = webAdminService;
 	}
 	
-	protected override Task<TimeSpan?> InternalGetCooldownAsync(DiscordChannel channel) => m_WebAdminService.GetConfigKey<TimeSpan?>("Cooldown", channel);
-	protected override Task<ICollection<string>?> InternalGetSourceNamesAsync(DiscordChannel channel) => m_WebAdminService.GetConfigKey<ICollection<string>>("SourceNames", channel);
+	protected async override Task<TimeSpan?> InternalGetCooldownAsync(DiscordChannel channel) {
+		int? cooldownSeconds = await m_WebAdminService.GetConfigValue<int?>("Cooldown", channel);
+		if (cooldownSeconds.HasValue) {
+			return TimeSpan.FromSeconds(cooldownSeconds.Value);
+		} else {
+			return default;
+		}
+	}
+	
+	protected override Task<ICollection<string>?> InternalGetSourceNamesAsync(DiscordChannel channel) => m_WebAdminService.GetConfigValue<ICollection<string>>("SourceNames", channel);
 }
 
 public class WebAdminService {
@@ -26,17 +34,31 @@ public class WebAdminService {
 		m_Options = options1;
 	}
 
-	public Task<T?> GetConfigKey<T>(string key, DiscordChannel channel) {
-		return GetConfigKey<T>(key, GetLevels(channel));
+	public Task<T?> GetConfigValue<T>(string key, DiscordChannel channel) {
+		return GetConfigValue<T>(key, GetLevels(channel));
 	}
 
-	public async Task<T?> GetConfigKey<T>(string key, IEnumerable<string> levels) {
+	public async Task<T?> GetConfigValue<T>(string key, IEnumerable<string> levels) {
+		ConfigItem<T>? ret = await GetConfigItem<T>(key, levels);
+
+		if (ret == null) {
+			return default;
+		} else {
+			return ret.Value;
+		}
+	}
+
+	public Task<ConfigItem<T>?> GetConfigItem<T>(string key, DiscordChannel channel) {
+		return GetConfigItem<T>(key, GetLevels(channel));
+	}
+
+	public async Task<ConfigItem<T>?> GetConfigItem<T>(string key, IEnumerable<string> levels) {
 		string url = $"{m_Options.Value.AdminBackendUrl}/ConfigKey/{string.Join(":", levels)}/{key}";
 		using HttpResponseMessage response = await m_HttpClient.GetAsync(url);
 		if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.NoContent) {
-			return default;
+			return null;
 		} else {
-			return await response.Content.ReadFromJsonAsync<T>();
+			return await response.Content.ReadFromJsonAsync<ConfigItem<T>>();
 		}
 	}
 
@@ -60,3 +82,5 @@ public class WebAdminService {
 		return levels;
 	}
 }
+
+public record ConfigItem<T>(string OverrideLevel, T Value);

@@ -13,6 +13,7 @@ import {ConfigFormComponent} from './components/config-form/config-form.componen
 import {RootLevelsComponent} from "./components/root-levels/root-levels.component";
 import {LevelsService, MockLevelService} from "./services/levels/levels.service";
 import { LevelSelectorItemComponent } from './components/level-selector/level-selector-item/level-selector-item.component';
+import { ConfigFormElementComponent } from './components/config-form/config-form-element/config-form-element.component';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { LevelSelectorItemComponent } from './components/level-selector/level-se
     ConfigFormComponent,
     ConfigPanelComponent,
     LevelSelectorItemComponent,
+    ConfigFormElementComponent,
   ],
   imports: [
     SecurityModule,

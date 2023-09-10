@@ -1,7 +1,11 @@
 <h2>Config form component</h2>
-You'll see the config options here.
 
-<div *ngIf="level">
-<h3>Current level</h3>
-{{ level.id }} {{ level.name }}
+<div *ngIf="level && elements; else default">
+  <table>
+    <app-config-form-element *ngFor="let element of elements" [element]="element" [level]="level"></app-config-form-element>
+  </table>
 </div>
+
+<ng-template #default>
+  You'll see the config options here.
+</ng-template>

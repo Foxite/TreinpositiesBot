@@ -3,6 +3,7 @@ import {LevelInfo} from "../models/models";
 import {lastValueFrom} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
+import {getPathFromLevel} from "../../util";
 
 @Injectable({
 	providedIn: 'root'
@@ -11,22 +12,15 @@ export class ConfigKeyService {
 	constructor(private http: HttpClient) {
 	}
 
-  private getLevelString(level: LevelInfo): string {
-    let levelStack = [ level.id ]; // todo use actual stack?
-
-    while (level.parent) {
-      level = level.parent
-      levelStack = [ level.id, ...levelStack ];
-    }
-
-    return levelStack.join(":");
-  }
-
   getConfigKey<T>(level: LevelInfo, key: string): Promise<T> {
-    return lastValueFrom<T>(this.http.get<T>(`${environment.apiUrl}/ChannelConfig/${this.getLevelString(level)}/${key}`))
+    return lastValueFrom<T>(this.http.get<T>(`${environment.apiUrl}/ConfigKey/${getPathFromLevel(level)}/${key}`))
   }
 
-  setConfigKey<T>(level: LevelInfo, key: string, value: string): Promise<void> {
-    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ChannelConfig/${this.getLevelString(level)}/${key}`, value));
+  setConfigKey<T>(level: LevelInfo, key: string, value: T): Promise<void> {
+    return lastValueFrom(this.http.put<void>(`${environment.apiUrl}/ConfigKey/${getPathFromLevel(level)}/${key}`, value, {
+      headers: {
+        "content-type": "application/json"
+      }
+    }));
   }
 }

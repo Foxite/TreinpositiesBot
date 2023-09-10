@@ -27,3 +27,14 @@ export function getLevelFromPath(levelRoot: LevelInfo, path: string): LevelInfo 
 
   return level;
 }
+
+export function getPathFromLevel(level: LevelInfo) {
+  let levelStack = [ level.id ]; // todo use actual stack?
+
+  while (level.parent) {
+    level = level.parent
+    levelStack = [ level.id, ...levelStack ];
+  }
+
+  return levelStack.join(":");
+}
