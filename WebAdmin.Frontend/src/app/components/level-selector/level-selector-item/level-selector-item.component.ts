@@ -10,6 +10,7 @@ export class LevelSelectorItemComponent implements OnInit {
   @Output() selected = new EventEmitter<LevelInfo>();
   @Input() myLevel!: LevelInfo;
   @Input() currentLevel!: LevelInfo | null;
+  @Input() highlightedPath: string | null = null;
 
   children!: LevelInfo[];
 

@@ -11,7 +11,12 @@
     <div *ngSwitchCase="DisplayState.ErrorLoadingLevelRoot">An unknown error has occurred while loading the channel configuration.</div>
     <div *ngSwitchCase="DisplayState.LevelRootLoaded">
       <div *ngIf="levelRoot; else errorState">
-        <app-level-selector-item [myLevel]="levelRoot" [currentLevel]="currentLevel" (selected)="onLevelSelected($event)"></app-level-selector-item>
+        <app-level-selector-item
+          [myLevel]="levelRoot"
+          [currentLevel]="currentLevel"
+          (selected)="onLevelSelected($event)"
+          [highlightedPath]="highlightedPath"
+        ></app-level-selector-item>
       </div>
     </div>
   </div>

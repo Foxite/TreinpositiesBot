@@ -7,6 +7,7 @@ export interface RootLevelInfo {
 }
 
 export interface LevelInfo extends RootLevelInfo {
+  path: string;
   parent?: LevelInfo;
   children?: Record<string, LevelInfo>;
 }

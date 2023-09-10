@@ -6,6 +6,8 @@ using WebAdmin.Backend.Config;
 
 namespace WebAdmin.Backend.Controllers;
 
+// TODO: better validation of override level.
+// TODO: access controls.
 // TODO: e2e testing of this controller.
 [ApiController]
 [Route("[controller]")]
@@ -21,11 +23,9 @@ public class ConfigKeyController : ControllerBase {
 	}
 
 	[HttpGet("{overrideLevel}/{key}")]
-	public async Task<IActionResult> GetConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
+	public IActionResult GetConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
 		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
 		
-		// TODO: better validation of override level.
-		// TODO: access controls.
 		int[] splitIndices = overrideLevel.IndicesOf(":").ToArray();
 
 		for (int i = splitIndices.Length; i >= -1; i--) {
@@ -37,7 +37,7 @@ public class ConfigKeyController : ControllerBase {
 			} else {
 				level = overrideLevel[..splitIndices[i]];
 			}
-			RedisValue result = await database.StringGetAsync(new RedisKey(level + "/" + key));
+			RedisValue result = database.StringGet(new RedisKey(level + "/" + key));
 			if (result != RedisValue.Null) {
 				return Ok(new GetConfigKeyDto(level, JsonNode.Parse(result.ToString())));
 			}
@@ -45,7 +45,27 @@ public class ConfigKeyController : ControllerBase {
 		
 		return NotFound();
 	}
-	
+
+	[HttpPut("{overrideLevel}/{key}")]
+	//[Consumes("text/plain")]
+	public IActionResult PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key, [FromBody] JsonValue value) {
+		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
+		
+		database.StringSet(new RedisKey(overrideLevel + "/" + key), new RedisValue(value.ToJsonString()));
+		
+		return NoContent();
+	}
+
+	[HttpDelete("{overrideLevel}/{key}")]
+	public IActionResult DeleteConfigKey([FromRoute] string overrideLevel, [FromRoute] string key) {
+		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
+
+		// Would like to get confirmation, but Redis just ignores delete commands for nonexistent keys
+		database.KeyDelete(new RedisKey(overrideLevel + "/" + key));
+
+		return NoContent();
+	}
+
 	/* Not needed anymore.
 	[HttpGet("{overrideLevel}/{key}")]
 	public async Task<IActionResult> GetAllConfigKeys([FromRoute] string overrideLevel) {
@@ -83,15 +103,4 @@ public class ConfigKeyController : ControllerBase {
 
 		return Ok(configKeys);
 	}*/
-
-	[HttpPut("{overrideLevel}/{key}")]
-	//[Consumes("text/plain")]
-	public Task<IActionResult> PutConfigKey([FromRoute] string overrideLevel, [FromRoute] string key, [FromBody] JsonValue value) {
-		var database = m_Redis.GetDatabase(m_RedisConfig.Value.Database);
-		
-		// TODO: better validation of override level.
-		// TODO: access controls.
-		database.StringSet(new RedisKey(overrideLevel + "/" + key), new RedisValue(value.ToJsonString()));
-		return Task.FromResult<IActionResult>(NoContent());
-	}
 }

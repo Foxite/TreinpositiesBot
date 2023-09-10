@@ -1,8 +1,12 @@
 <div class="item" (click)="onClick($event)">
-  <strong>{{myLevel.name}}</strong> <span *ngIf="currentLevel == myLevel">(selected)</span>
+  <strong [class.highlighted]="myLevel.path == highlightedPath">{{myLevel.name}}</strong> <span *ngIf="currentLevel == myLevel">(selected)</span>
   <ul>
     <li *ngFor="let child of children">
-      <app-level-selector-item [myLevel]="child" (selected)="onChildSelected($event)" [currentLevel]="currentLevel"></app-level-selector-item>
+      <app-level-selector-item
+        [myLevel]="child"
+        [highlightedPath]="highlightedPath"
+        (selected)="onChildSelected($event)"
+        [currentLevel]="currentLevel"></app-level-selector-item>
     </li>
   </ul>
 </div>

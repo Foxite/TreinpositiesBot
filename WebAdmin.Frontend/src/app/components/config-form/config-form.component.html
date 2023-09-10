@@ -2,7 +2,13 @@
 
 <div *ngIf="level && elements; else default">
   <table>
-    <app-config-form-element *ngFor="let element of elements" [element]="element" [level]="level"></app-config-form-element>
+    <app-config-form-element
+      *ngFor="let element of elements"
+      #hElement
+      (mouseover)="hoverElement(hElement)"
+      [element]="element"
+      [level]="level">
+    </app-config-form-element>
   </table>
 </div>
 

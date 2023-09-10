@@ -1,2 +1,29 @@
+<td><button (click)="deleteItem()">Delete</button></td>
 <td><label>{{element.label}}</label></td>
-<td><input [type]="element.type" [placeholder]="element.placeholder" [name]="element.key" (change)="onChange($event)"></td>
+<td>
+  <input
+    *ngIf="element.type == ConfigFormElementType.Number || element.type == ConfigFormElementType.Text"
+    [type]="element.type"
+    [placeholder]="this.valueSpecifiedAt == this.level.path ? null : this.elementValue || ''"
+    [name]="element.key"
+    [value]="this.valueSpecifiedAt == this.level.path ? this.elementValue : null"
+    (change)="onChange($event)">
+
+  <select
+    *ngIf="element.type == ConfigFormElementType.SelectSingle || element.type == ConfigFormElementType.SelectMultiple"
+    [multiple]="element.type == ConfigFormElementType.SelectMultiple ? 'multiple' : null"
+    [name]="element.key"
+    (change)="onChange($event)">
+    <option
+      *ngFor="let option of element.validation"
+      [selected]="this.elementValue?.indexOf(option) > -1 ? 'selected' : null">
+      {{option}}
+    </option>
+  </select>
+</td>
+<td>
+  {{ displayState }}
+</td>
+<td>
+  {{ valueSpecifiedAt }}
+</td>

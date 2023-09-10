@@ -1,5 +1,15 @@
-<app-root-levels [currentRootLevelId]="currentRootLevelId" (selected)="onSelectRootLevel($event)"></app-root-levels>
+<app-root-levels
+  [currentRootLevelId]="currentRootLevelId"
+  (selected)="onSelectRootLevel($event)">
+</app-root-levels>
 
-<app-level-selector [levelPath]="currentLevelPath" (selected)="onSelectLevel($event)"></app-level-selector>
+<app-level-selector
+  [levelPath]="currentLevelPath"
+  [highlightedPath]="highlightedPath"
+  (selected)="onSelectLevel($event)">
+</app-level-selector>
 
-<app-config-form [level]="currentLevel"></app-config-form>
+<app-config-form
+  [level]="currentLevel"
+  (hoveredElementSpecifierPath)="onHoverFormElement($event)">
+</app-config-form>

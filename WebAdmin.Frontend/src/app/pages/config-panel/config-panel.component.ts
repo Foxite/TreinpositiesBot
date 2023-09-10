@@ -11,6 +11,7 @@ export class ConfigPanelComponent implements OnInit {
   currentRootLevelId: string | null = null;
   currentLevelPath: string | null = null;
   currentLevel: LevelInfo | null = null;
+  highlightedPath: string | null = null;
 
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute) {
@@ -57,5 +58,9 @@ export class ConfigPanelComponent implements OnInit {
     this.currentLevelPath = levelPath;
 
     this.currentLevel = level;
+  }
+
+  onHoverFormElement(specifiedAtPath: string) {
+    this.highlightedPath = specifiedAtPath;
   }
 }

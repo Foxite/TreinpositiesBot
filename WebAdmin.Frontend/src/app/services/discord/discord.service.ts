@@ -33,6 +33,6 @@ export class DiscordService {
   }
 
   getCurrentUserGuilds(): Promise<DiscordGuildSummary[]> {
-    return this.getCachedOrApi(`${this.apiUrl}/users/@me/guilds`, 60);
+    return this.getCachedOrApi(`${this.apiUrl}/users/@me/guilds`, 600);
   }
 }

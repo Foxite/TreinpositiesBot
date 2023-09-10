@@ -1,32 +1,46 @@
-import {Component, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {LevelInfo} from "../../models/models";
-import {ConfigKeyService} from "../../services/config-key.service";
+import {ConfigFormElementComponent} from "./config-form-element/config-form-element.component";
 
 @Component({
   selector: 'app-config-form',
   templateUrl: './config-form.component.html',
   styleUrls: ['./config-form.component.scss']
 })
-export class ConfigFormComponent implements OnInit {
+export class ConfigFormComponent implements OnInit, OnChanges {
   @Input() level: LevelInfo | null = null;
+  @Output() hoveredElementSpecifierPath = new EventEmitter<string>();
 
   elements: ConfigFormElement[] | null = null;
 
-  ngOnInit() {
+  private setFormElements() {
     this.elements = [
       {
         type: ConfigFormElementType.Number,
         key: "Cooldown",
-        placeholder: "placeholder",
-        label: "Cooldown (seconds)"
+        label: "Cooldown (seconds)",
       },
       {
-        type: ConfigFormElementType.Text,
+        type: ConfigFormElementType.SelectMultiple,
         key: "SourceNames",
-        placeholder: "[]",
-        label: "Source names"
+        label: "Sources",
+        validation: ["Treinposities", "Busposities", "Trein/Busposities", "Planespotters"],
       },
     ]
+  }
+
+  ngOnInit() {
+    this.setFormElements();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes["level"]) {
+      this.setFormElements();
+    }
+  }
+
+  hoverElement(hElement: ConfigFormElementComponent) {
+    this.hoveredElementSpecifierPath.emit(hElement.valueSpecifiedAt);
   }
 }
 
@@ -34,10 +48,12 @@ export interface ConfigFormElement {
   type: ConfigFormElementType,
   key: string,
   label: string,
-  placeholder: string,
+  validation?: any,
 }
 
 export enum ConfigFormElementType {
   Text = 'text',
   Number = 'number',
+  SelectSingle = 'select-single',
+  SelectMultiple = 'select-multiple',
 }

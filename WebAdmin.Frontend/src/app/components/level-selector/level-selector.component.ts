@@ -11,6 +11,7 @@ import {getLevelFromPath} from "../../../util";
 })
 export class LevelSelectorComponent implements OnInit, OnChanges {
   @Input() levelPath: string | null = null;
+  @Input() highlightedPath: string | null = null;
   @Output() selected = new EventEmitter<LevelInfo>();
 
   currentLevel: LevelInfo | null = null;
