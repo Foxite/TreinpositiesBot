@@ -1,8 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {LevelInfo} from "../../models/models";
-import {ActivatedRoute, EventType, Router} from "@angular/router";
-import {ChannelConfigService} from "../../services/channel-config.service";
-import {SecurityService} from "../../services/security/security.service";
+import {ActivatedRoute, Router} from "@angular/router";
 
 @Component({
   selector: 'app-config-panel',
@@ -59,6 +57,5 @@ export class ConfigPanelComponent implements OnInit {
     this.currentLevelPath = levelPath;
 
     this.currentLevel = level;
-    console.log(level);
   }
 }

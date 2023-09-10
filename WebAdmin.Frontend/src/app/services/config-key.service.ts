@@ -7,7 +7,7 @@ import {environment} from "../../environments/environment";
 @Injectable({
 	providedIn: 'root'
 })
-export class ChannelConfigService {
+export class ConfigKeyService {
 	constructor(private http: HttpClient) {
 	}
 

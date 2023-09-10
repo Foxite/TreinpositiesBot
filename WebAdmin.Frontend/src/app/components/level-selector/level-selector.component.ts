@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges
 import {LevelInfo, RootLevelInfo} from "../../models/models";
 import {SecurityService} from "../../services/security/security.service";
 import {LevelsService} from "../../services/levels/levels.service";
+import {getLevelFromPath} from "../../../util";
 
 @Component({
   selector: 'app-level-selector',
@@ -44,8 +45,7 @@ export class LevelSelectorComponent implements OnInit, OnChanges {
     }
   }
 
-  updateLevels(oldLevelPath: string | null, newLevelPath: string) {
-    // TODO use component input parameter
+  private updateLevels(oldLevelPath: string | null, newLevelPath: string) {
     const currentUser = this.security.currentUser;
     if (!currentUser) {
       return;
@@ -66,7 +66,6 @@ export class LevelSelectorComponent implements OnInit, OnChanges {
     this.rootLevel = currentUser.rootLevels[newRootId!];
     this.displayState = DisplayState.LoadingLevelRoot;
 
-    // TODO set this.levelRoot
     this.levelsService.getLevelTree(newRootId)
       .then(levelRoot => {
         if (this.levelPath !== newLevelPath) {
@@ -89,31 +88,10 @@ export class LevelSelectorComponent implements OnInit, OnChanges {
   }
 
   setSelectedLevel(levelPath: string) {
-    const levelPathSplit = levelPath.split(':');
-
-    if (levelPathSplit[0] !== this.levelRoot?.id) {
-      throw new Error("Attempting to set selected level with mismatched root");
+    const level = getLevelFromPath(this.levelRoot!, levelPath);
+    if (level != this.currentLevel) {
+      this.onLevelSelected(level);
     }
-
-    let first = true;
-    let level = this.levelRoot;
-    for (const pathSegment of levelPathSplit) {
-      if (first) {
-        first = false;
-        continue;
-      }
-
-      if (!level.children) {
-        throw new Error("Level path is not found in tree");
-      }
-
-      level = level.children[pathSegment];
-      if (!level) {
-        throw new Error("Level path is not found in tree");
-      }
-    }
-
-    this.currentLevel = level;
   }
 
   onLevelSelected(level: LevelInfo) {
