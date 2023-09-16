@@ -75,7 +75,7 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 
 			using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), targetUri), HttpCompletionOption.ResponseHeadersRead)) {
 				if (response.StatusCode == HttpStatusCode.Found) {
-					photoboxes = await GetPhotoboxesForVehicle(source, response.Headers.Location!);
+					photoboxes = await GetPhotoboxesForVehicle(source, response.Headers.Location!.ToString());
 				} else if (response.StatusCode == HttpStatusCode.OK) {
 					var html = new HtmlDocument();
 					html.Load(await response.Content.ReadAsStreamAsync());
@@ -95,7 +95,7 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 						candidates.Shuffle();
 						foreach (HtmlNode candidate in candidates.Take(5)) {
 							string candidatePhotosUrl = candidate.GetAttributeValue("href", null);
-							photoboxes = await GetPhotoboxesForVehicle(source, new Uri(candidatePhotosUrl));
+							photoboxes = await GetPhotoboxesForVehicle(source, candidatePhotosUrl);
 							if (photoboxes != null) {
 								break;
 							}
@@ -117,9 +117,9 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 		return null;
 	}
 
-	async Task<List<Photobox>?> GetPhotoboxesForVehicle(string source, Uri vehicleUri) {
+	async Task<List<Photobox>?> GetPhotoboxesForVehicle(string source, string vehicleUri) {
 		var html = new HtmlDocument();
-		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), Path.Combine(vehicleUri.IsAbsoluteUri ? vehicleUri.AbsolutePath : vehicleUri.ToString(), "foto")))) {
+		using (HttpResponseMessage response = await m_Http.GetAsync(new Uri(GetBaseUri(source), Path.Combine(vehicleUri, "foto")))) {
 			response.EnsureSuccessStatusCode();
 			html.Load(await response.Content.ReadAsStreamAsync());
 		}
