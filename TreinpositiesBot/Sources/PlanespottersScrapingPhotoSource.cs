@@ -73,11 +73,11 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 			document.Load(await response.Content.ReadAsStreamAsync());
 		}
 
-		string GetProperty(string key) {
+		string GetProperty(params string[] keys) {
 			return document.DocumentNode
 				.SelectSingleNode("/html/body/main/div[2]/div[1]/div[2]/div[1]")
 				.QuerySelectorAll(".photo_data__heading")
-				.First(property => property.InnerText.Trim() == key)
+				.First(property => keys.Any(key => property.InnerText.Trim().ToLower() == key))
 				.ParentNode
 				.QuerySelectorAll(".photo_data__link")
 				.Select(node => Util.GetText(node))
@@ -91,11 +91,11 @@ public class PlanespottersScrapingPhotoSource : PhotoSource {
 		return new Photobox(
 			url.ToString(),
 			imageUrl,
-			GetProperty("Airline"),
-			GetProperty("Aircraft"),
-			GetProperty("Reg"),
+			GetProperty("airline"),
+			GetProperty("aircraft", "company"),
+			GetProperty("reg"),
 			PhotoType.General,
-			GetProperty("Date"),
+			GetProperty("date"),
 			authorNode.InnerText,
 			new Uri(m_BaseUrl, authorNode.GetAttributeValue("href", null)).ToString()
 		);
