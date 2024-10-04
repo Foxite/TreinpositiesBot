@@ -27,8 +27,9 @@ var host = Host.CreateDefaultBuilder()
 	.ConfigureServices((hbc, isc) => {
 		isc.Configure<CoreConfig>(hbc.Configuration.GetSection("Core"));
 		isc.Configure<TreinpositiesPhotoSource.Options>(hbc.Configuration.GetSection("Treinposities"));
+		isc.Configure<JetphotosPhotoSource.Options>(hbc.Configuration.GetSection("Jetphotos"));
 
-		isc.AddSingleton<Random>();
+		isc.AddSingleton<Random>();	
 		
 		isc.AddSingleton(isp => new DiscordClient(new DiscordConfiguration() {
 			Token = isp.GetRequiredService<IOptions<CoreConfig>>().Value.DiscordToken,
@@ -53,6 +54,7 @@ var host = Host.CreateDefaultBuilder()
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, BuspositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, TreinpositiesPhotoSource>());
 		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, PlanespottersScrapingPhotoSource>());
+		isc.TryAddEnumerable(ServiceDescriptor.Singleton<PhotoSource, JetphotosPhotoSource>());
 
 		isc.AddSingleton<PhotoSourceProvider>();
 
@@ -171,7 +173,7 @@ discord.MessageCreated += async (unused, args) => {
 				// Message was deleted
 			}
 		} catch (Exception ex) {
-			FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: ${photobox?.PageUrl ?? "null"}";
+			FormattableString report = $"Error responding to message {args.Message.Id} ({args.Message.JumpLink}), numbers: {string.Join(", ", ids)}; photo url: {photobox?.PageUrl ?? "null"}";
 
 			logger.LogCritical(ex, report);
 
