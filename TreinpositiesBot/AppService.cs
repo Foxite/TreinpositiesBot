@@ -46,7 +46,6 @@ public class AppService : IHostedService {
 		return Task.CompletedTask;
 	}
 
-
 	private async Task OnDiscordOnMessageCreated(DiscordClient unused, MessageCreateEventArgs args) {
 		if (args.Guild != null) {
 			Permissions perms = args.Channel.PermissionsFor(args.Guild.CurrentMember);
@@ -76,7 +75,7 @@ public class AppService : IHostedService {
 			return;
 		}
 
-		if (m_Cooldowns.TryGetValue((args.Author.Id, args.Channel.Id), out DateTime lastSend) && DateTime.UtcNow - lastSend <= await channelConfigService.GetCooldownAsync(args.Channel)) {
+		if (m_Cooldowns.TryGetValue((args.Author.Id, args.Channel.Id), out DateTime lastSend) && DateTime.UtcNow - lastSend <= await m_ChannelConfigService.GetCooldownAsync(args.Channel)) {
 			try {
 				await args.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("⏲️"));
 			} catch (NotFoundException) {
@@ -118,11 +117,12 @@ public class AppService : IHostedService {
 					PhotoType.Interior   => "Interieurfoto",
 					PhotoType.Detail     => "Detailfoto",
 					PhotoType.Cabin      => "Cabinefoto",
-					PhotoType.EngineRoom => "Motorruimtefoto"
+					PhotoType.EngineRoom => "Motorruimtefoto",
 				};
 
 				m_Cooldowns[(args.Message.Author.Id, args.Channel.Id)] = DateTime.UtcNow;
 				try {
+					m_Logger.LogDebug("Sending photobox\nAuthor: {Author} {AuthorUrl}\nUrl: {Url}\nImage url: {ImageUrl}", photobox.Photographer, photobox.PhotographerUrl, photobox.PageUrl, photobox.ImageUrl);
 					await args.Message.RespondAsync(dmb => dmb.WithEmbed(new DiscordEmbedBuilder().WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
 						.WithTitle($"{typeName} van {photobox.Identity}")
 						.WithUrl(photobox.PageUrl)
