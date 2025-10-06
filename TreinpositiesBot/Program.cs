@@ -160,6 +160,7 @@ discord.MessageCreated += async (unused, args) => {
 
 			cooldowns[(args.Message.Author.Id, args.Channel.Id)] = DateTime.UtcNow;
 			try {
+				logger.LogDebug("Sending photobox\nAuthor: {Author} {AuthorUrl}\nUrl: {Url}\nImage url: {ImageUrl}", photobox.Photographer, photobox.PhotographerUrl, photobox.PageUrl, photobox.ImageUrl);
 				await args.Message.RespondAsync(dmb => dmb
 					.WithEmbed(new DiscordEmbedBuilder()
 						.WithAuthor(photobox.Photographer, photobox.PhotographerUrl)
