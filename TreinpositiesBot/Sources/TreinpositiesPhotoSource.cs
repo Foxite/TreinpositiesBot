@@ -47,7 +47,7 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 
 	private Uri GetBaseUri(string source) => source switch {
 		"bus" => Busposities,
-		"train" => Treinposities
+		"train" => Treinposities,
 	};
 
 	public override IReadOnlyCollection<string> ExtractIds(string message) {
