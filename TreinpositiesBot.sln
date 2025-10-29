@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreinpositiesBot", "TreinpositiesBot\TreinpositiesBot.csproj", "{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPImageProxy", "TPImageProxy\TPImageProxy.csproj", "{36FEE388-ACD7-42E8-9B3B-87BE72186A01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19A66002-2FAB-4FC8-8877-5D9CE9D2B73E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36FEE388-ACD7-42E8-9B3B-87BE72186A01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36FEE388-ACD7-42E8-9B3B-87BE72186A01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36FEE388-ACD7-42E8-9B3B-87BE72186A01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36FEE388-ACD7-42E8-9B3B-87BE72186A01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
