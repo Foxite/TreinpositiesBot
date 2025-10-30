@@ -145,7 +145,7 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 				
 				return new Photobox(
 					new Uri(GetBaseUri(source), pageUrl.GetAttributeValue("href", null)).ToString(),
-					new Uri(GetBaseUri(source), imageUrl.GetAttributeValue("src", null)).ToString(),
+					ProxiedImageUrl(new Uri(GetBaseUri(source), imageUrl.GetAttributeValue("src", null)).ToString()),
 					ownerString.Trim(),
 					Util.GetText(vehicleType),
 					Util.GetText(vehicleNumber),
@@ -179,8 +179,18 @@ public class TreinBusPositiesPhotoSource : PhotoSource {
 		}
 	}
 
+	private string ProxiedImageUrl(string imageUrl) {
+		if (m_Options.CurrentValue is { UseTPImageProxy: true, TPImageProxyUrl: not null }) {
+			return m_Options.CurrentValue.TPImageProxyUrl + "/" + Path.GetFileName(imageUrl);
+		} else {
+			return imageUrl;
+		}
+	}
+
 	public class Options {
 		public string[] BlockedPhotographers { get; set; } = Array.Empty<string>();
+		public bool UseTPImageProxy { get; set; } = false;
+		public string? TPImageProxyUrl { get; set; }
 	}
 
 	[Flags]
