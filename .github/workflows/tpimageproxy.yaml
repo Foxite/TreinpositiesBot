@@ -7,7 +7,7 @@ on:
 env:
   REGISTRY: ghcr.io/Foxite
   IMAGE_NAME: tpimageproxy
-  BUILD_CONTEXT: .
+  BUILD_CONTEXT: TreinpositiesBot
   DOCKERFILE: TPImageProxy/Dockerfile
   GLUE_KEY_ALG: ES512
   GLUE_KEY_ID: TreinpositiesBot
